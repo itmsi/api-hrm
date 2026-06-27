@@ -130,6 +130,56 @@ const candidateSchemas = {
         description: 'Candidate resume URL or file path',
         example: 'https://example.com/resumes/john-doe.pdf'
       },
+      schedule_interview: {
+        type: 'object',
+        nullable: true,
+        description: 'Interview schedule details',
+        properties: {
+          assign_role: { type: 'string', nullable: true, example: 'interviewer' },
+          schedule_interview_date: { type: 'string', format: 'date', nullable: true, example: '2026-06-28' },
+          schedule_interview_time: { type: 'string', nullable: true, example: '10:00' },
+          schedule_interview_duration: { type: 'string', nullable: true, example: '60m' }
+        }
+      },
+      ptk_date: {
+        type: 'string',
+        format: 'date',
+        nullable: true,
+        description: 'PTK date',
+        example: '2026-06-28'
+      },
+      offering_letter: {
+        type: 'string',
+        format: 'date',
+        nullable: true,
+        description: 'Offering letter date',
+        example: '2026-06-28'
+      },
+      remark: {
+        type: 'string',
+        nullable: true,
+        description: 'Candidate remark',
+        example: 'Candidate available for immediate hire'
+      },
+      group_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true,
+        description: 'Candidate group UUID',
+        example: '123e4567-e89b-12d3-a456-426614174020'
+      },
+      candidate_status: {
+        type: 'string',
+        nullable: true,
+        description: 'Candidate status',
+        example: 'active'
+      },
+      candidate_status_offering_letter: {
+        type: 'string',
+        nullable: true,
+        description: 'Candidate status offering letter',
+        example: 'approved'
+      },
       created_at: {
         type: 'string',
         format: 'date-time',
@@ -258,6 +308,43 @@ const candidateSchemas = {
         nullable: true
       },
       candidate_resume: {
+        type: 'string',
+        nullable: true
+      },
+      schedule_interview: {
+        type: 'object',
+        nullable: true,
+        properties: {
+          assign_role: { type: 'string', nullable: true },
+          schedule_interview_date: { type: 'string', format: 'date', nullable: true },
+          schedule_interview_time: { type: 'string', nullable: true },
+          schedule_interview_duration: { type: 'string', nullable: true }
+        }
+      },
+      ptk_date: {
+        type: 'string',
+        format: 'date',
+        nullable: true
+      },
+      offering_letter: {
+        type: 'string',
+        format: 'date',
+        nullable: true
+      },
+      remark: {
+        type: 'string',
+        nullable: true
+      },
+      group_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true
+      },
+      candidate_status: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_status_offering_letter: {
         type: 'string',
         nullable: true
       },

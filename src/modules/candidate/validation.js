@@ -1,5 +1,13 @@
 const { body, param } = require('express-validator')
 
+const isUuidOrEmpty = (value) => {
+  if (value === undefined || value === null) return true
+  if (typeof value !== 'string') return false
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '' || normalized === 'null' || normalized === 'nan') return true
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value)
+}
+
 const SORT_COLUMNS = [
   'created_at',
   'candidate_name',
@@ -11,6 +19,8 @@ const createValidation = [
   body('company_id').optional().isUUID().withMessage('company_id harus UUID'),
   body('department_id').optional().isUUID().withMessage('department_id harus UUID'),
   body('title_id').optional().isUUID().withMessage('title_id harus UUID'),
+  body('group_id').optional().isUUID().withMessage('group_id harus UUID'),
+  body('candidate_status').optional().isString().isLength({ max: 255 }).withMessage('candidate_status harus teks maksimal 255 karakter').trim(),
   body('candidate_email').optional().isEmail().withMessage('Format email tidak valid').trim(),
   body('candidate_phone').optional().isString().withMessage('candidate_phone harus berupa teks').trim(),
   body('candidate_date_birth').optional().isDate().withMessage('candidate_date_birth harus berupa tanggal'),
@@ -27,6 +37,14 @@ const createValidation = [
   body('candidate_address').optional().isString().withMessage('candidate_address harus berupa teks').trim(),
   body('candidate_foto').optional().isString().withMessage('candidate_foto harus berupa teks').trim(),
   body('candidate_resume').optional().isString().withMessage('candidate_resume harus berupa teks').trim(),
+  body('schedule_interview').optional().isObject().withMessage('schedule_interview harus berupa object'),
+  body('schedule_interview.assign_role').optional().isString().withMessage('assign_role harus berupa teks').trim(),
+  body('schedule_interview.schedule_interview_date').optional().isDate().withMessage('schedule_interview_date harus berupa tanggal'),
+  body('schedule_interview.schedule_interview_time').optional().isString().withMessage('schedule_interview_time harus berupa teks').trim(),
+  body('schedule_interview.schedule_interview_duration').optional().isString().withMessage('schedule_interview_duration harus berupa teks').trim(),
+  body('ptk_date').optional().isDate().withMessage('ptk_date harus berupa tanggal'),
+  body('offering_letter').optional().isDate().withMessage('offering_letter harus berupa tanggal'),
+  body('remark').optional().isString().withMessage('remark harus berupa teks').trim(),
   body('is_delete').optional().isBoolean().withMessage('is_delete harus boolean')
 ]
 
@@ -44,7 +62,14 @@ const getListValidation = [
   body('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit harus antara 1-100'),
   body('search').optional().isString().withMessage('Search harus berupa teks'),
   body('sort_by').optional().isIn(SORT_COLUMNS).withMessage(`sort_by harus salah satu dari: ${SORT_COLUMNS.join(', ')}`),
-  body('sort_order').optional().isIn(['asc', 'desc']).withMessage('sort_order harus asc atau desc')
+  body('sort_order').optional().isIn(['asc', 'desc']).withMessage('sort_order harus asc atau desc'),
+  body('group_id').optional().custom(isUuidOrEmpty).withMessage('group_id harus UUID atau kosong'),
+  body('company_id').optional().custom(isUuidOrEmpty).withMessage('company_id harus UUID atau kosong'),
+  body('department_id').optional().custom(isUuidOrEmpty).withMessage('department_id harus UUID atau kosong'),
+  body('title_id').optional().custom(isUuidOrEmpty).withMessage('title_id harus UUID atau kosong'),
+  body('candidate_status').optional().isString().withMessage('candidate_status harus berupa teks').trim(),
+  body('candidate_status_offering_letter').optional({ nullable: true }).isString().withMessage('candidate_status_offering_letter harus berupa teks atau null').trim(),
+  body('assign_role').optional().isString().withMessage('assign_role harus berupa teks').trim()
 ]
 
 module.exports = {

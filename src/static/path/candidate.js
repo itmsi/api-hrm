@@ -3,7 +3,7 @@
  */
 
 const candidatePaths = {
-  '/hrm/candidates/get': {
+  '/candidates/get': {
     post: {
       tags: ['Candidates'],
       summary: 'Get candidates list',
@@ -24,7 +24,14 @@ const candidatePaths = {
                 limit: { type: 'integer', example: 10 },
                 search: { type: 'string', example: '' },
                 sort_by: { type: 'string', example: 'created_at' },
-                sort_order: { type: 'string', example: 'desc' }
+                sort_order: { type: 'string', example: 'desc' },
+                group_id: { type: 'string', nullable: true, example: '' },
+                company_id: { type: 'string', nullable: true, example: '' },
+                department_id: { type: 'string', nullable: true, example: '' },
+                title_id: { type: 'string', nullable: true, example: '' },
+                candidate_status: { type: 'string', nullable: true, example: '' },
+                candidate_status_offering_letter: { type: 'string', nullable: true, example: '' },
+                assign_role: { type: 'string', nullable: true, example: '' }
               }
             }
           }
@@ -52,11 +59,7 @@ const candidatePaths = {
                           page: { type: 'integer' },
                           limit: { type: 'integer' },
                           total: { type: 'integer' },
-                          totalPages: { type: 'integer' },
-                          hasNextPage: { type: 'boolean' },
-                          hasPrevPage: { type: 'boolean' },
-                          nextPage: { type: 'integer', nullable: true },
-                          prevPage: { type: 'integer', nullable: true }
+                          totalPages: { type: 'integer' }
                         }
                       }
                     }
@@ -69,7 +72,7 @@ const candidatePaths = {
       }
     }
   },
-  '/hrm/candidates/create': {
+  '/candidates/create': {
     post: {
       tags: ['Candidates'],
       summary: 'Create new candidate',
@@ -106,7 +109,7 @@ const candidatePaths = {
       }
     }
   },
-  '/hrm/candidates/{id}': {
+  '/candidates/{id}': {
     get: {
       tags: ['Candidates'],
       summary: 'Get candidate by ID',
