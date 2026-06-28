@@ -22,6 +22,10 @@ routing.use(`${API_TAG}/examples`, exampleModule)
 const candidateModule = require('../../modules/candidate')
 routing.use(`${API_TAG}/hrm/candidates`, candidateModule)
 
+// Schedule Interview Module
+const scheduleInterviewModule = require('../../modules/schedule_interview')
+routing.use(`${API_TAG}/hrm/schedule_interview`, scheduleInterviewModule)
+
 // Tambahkan routes module Anda di sini
 // Example:
 // const yourModule = require('../../modules/yourModule')
