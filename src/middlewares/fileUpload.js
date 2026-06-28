@@ -18,11 +18,18 @@ const fileFilter = (req, file, cb) => {
     'text/xml', // .xml
     'application/zip', // .zip
     'application/x-zip-compressed', // .zip
-    'application/octet-stream' // .pbix and other binary files
+    'application/octet-stream', // .pbix and other binary files
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'image/webp',
+    'image/gif',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
 
   // Check file extension as fallback
-  const allowedExtensions = ['.xls', '.xlsx', '.pdf', '.csv', '.json', '.xml', '.zip', '.pbix'];
+  const allowedExtensions = ['.xls', '.xlsx', '.pdf', '.csv', '.json', '.xml', '.zip', '.pbix', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.doc', '.docx'];
   const fileExtension = path.extname(file.originalname).toLowerCase();
 
   if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
@@ -38,14 +45,18 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
-    files: 1 // Only one file per request
+    files: 2 // Allow up to two files per request, one for each candidate field
   }
 });
 
 // Middleware for single file upload
 const uploadSingleFile = upload.single('file');
 
-// Middleware wrapper to handle multer errors
+const uploadCandidateFiles = upload.fields([
+  { name: 'candidate_foto', maxCount: 1 },
+  { name: 'candidate_resume', maxCount: 1 }
+]);
+
 const handleFileUpload = (req, res, next) => {
   uploadSingleFile(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -60,6 +71,39 @@ const handleFileUpload = (req, res, next) => {
         return res.status(400).json({
           success: false,
           message: 'Too many files. Only one file is allowed.',
+          error: err.message
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'File upload error',
+        error: err.message
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: 'File validation error',
+        error: err.message
+      });
+    }
+    next();
+  });
+};
+
+const handleCandidateFileUpload = (req, res, next) => {
+  uploadCandidateFiles(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum size is 50MB.',
+          error: err.message
+        });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({
+          success: false,
+          message: 'Too many files. Only one file is allowed per field.',
           error: err.message
         });
       }
@@ -111,6 +155,7 @@ const getContentType = (filename) => {
 
 module.exports = {
   handleFileUpload,
+  handleCandidateFileUpload,
   generateFileName,
   getContentType
 };

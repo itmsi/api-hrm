@@ -130,6 +130,18 @@ const candidateSchemas = {
         description: 'Candidate resume URL or file path',
         example: 'https://example.com/resumes/john-doe.pdf'
       },
+      candidate_foto_path: {
+        type: 'string',
+        nullable: true,
+        description: 'Stored Nextcloud path for candidate photo',
+        example: '/HRM/CN-0001/candidate_foto/1710000000000_photo.jpg'
+      },
+      candidate_resume_path: {
+        type: 'string',
+        nullable: true,
+        description: 'Stored Nextcloud path for candidate resume',
+        example: '/HRM/CN-0001/candidate_resume/1710000000000_resume.pdf'
+      },
       schedule_interview: {
         type: 'object',
         nullable: true,
@@ -227,6 +239,142 @@ const candidateSchemas = {
       }
     }
   },
+  CandidateMultipartInput: {
+    type: 'object',
+    properties: {
+      company_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true
+      },
+      department_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true
+      },
+      title_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true
+      },
+      candidate_number: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_name: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_email: {
+        type: 'string',
+        format: 'email',
+        nullable: true
+      },
+      candidate_phone: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_religion: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_gender: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_marital_status: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_age: {
+        type: 'integer',
+        nullable: true
+      },
+      candidate_date_birth: {
+        type: 'string',
+        format: 'date',
+        nullable: true
+      },
+      candidate_nationality: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_city: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_state: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_country: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_address: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_foto: {
+        type: 'string',
+        format: 'binary',
+        nullable: true,
+        description: 'Candidate photo upload file'
+      },
+      candidate_resume: {
+        type: 'string',
+        format: 'binary',
+        nullable: true,
+        description: 'Candidate resume upload file'
+      },
+      candidate_foto_is_delete: {
+        type: 'boolean',
+        nullable: true,
+        description: 'Set to true to delete the existing candidate photo from Nextcloud and clear DB values'
+      },
+      candidate_resume_is_delete: {
+        type: 'boolean',
+        nullable: true,
+        description: 'Set to true to delete the existing candidate resume from Nextcloud and clear DB values'
+      },
+      schedule_interview: {
+        type: 'string',
+        nullable: true,
+        description: 'JSON string for interview schedule details'
+      },
+      ptk_date: {
+        type: 'string',
+        format: 'date',
+        nullable: true
+      },
+      offering_letter: {
+        type: 'string',
+        format: 'date',
+        nullable: true
+      },
+      remark: {
+        type: 'string',
+        nullable: true
+      },
+      group_id: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true
+      },
+      candidate_status: {
+        type: 'string',
+        nullable: true
+      },
+      candidate_status_offering_letter: {
+        type: 'string',
+        nullable: true
+      },
+      is_delete: {
+        type: 'boolean',
+        nullable: true
+      }
+    }
+  },
   CandidateInput: {
     type: 'object',
     properties: {
@@ -309,6 +457,14 @@ const candidateSchemas = {
       },
       candidate_resume: {
         type: 'string',
+        nullable: true
+      },
+      candidate_foto_is_delete: {
+        type: 'boolean',
+        nullable: true
+      },
+      candidate_resume_is_delete: {
+        type: 'boolean',
         nullable: true
       },
       schedule_interview: {

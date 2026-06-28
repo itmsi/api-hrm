@@ -22,7 +22,7 @@ const getById = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const data = await service.createCandidate(req.body, req.user)
+    const data = await service.createCandidate(req.body, req.files, req.user)
     return successResponse(res, data, 'Data kandidat berhasil dibuat', 201)
   } catch (error) {
     return errorResponse(res, error?.message || error, error?.statusCode || 500)
@@ -32,7 +32,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params
-    const data = await service.updateCandidate(id, req.body, req.user)
+    const data = await service.updateCandidate(id, req.body, req.files, req.user)
     return successResponse(res, data, 'Data kandidat berhasil diupdate')
   } catch (error) {
     return errorResponse(res, error?.message || error, error?.statusCode || 500)

@@ -76,7 +76,7 @@ const candidatePaths = {
     post: {
       tags: ['Candidates'],
       summary: 'Create new candidate',
-      description: 'Create a new candidate record',
+      description: 'Create a new candidate record using multipart/form-data. Upload candidate_foto and/or candidate_resume files and store their Nextcloud share links.',
       security: [
         {
           bearerAuth: []
@@ -85,8 +85,8 @@ const candidatePaths = {
       requestBody: {
         required: true,
         content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/CandidateInput' }
+          'multipart/form-data': {
+            schema: { $ref: '#/components/schemas/CandidateMultipartInput' }
           }
         }
       },
@@ -151,7 +151,7 @@ const candidatePaths = {
     put: {
       tags: ['Candidates'],
       summary: 'Update candidate',
-      description: 'Update a candidate by ID',
+      description: 'Update a candidate by ID using multipart/form-data. If no file is provided for candidate_foto or candidate_resume, the existing stored link is preserved.',
       security: [
         {
           bearerAuth: []
@@ -169,8 +169,8 @@ const candidatePaths = {
       requestBody: {
         required: true,
         content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/CandidateInput' }
+          'multipart/form-data': {
+            schema: { $ref: '#/components/schemas/CandidateMultipartInput' }
           }
         }
       },

@@ -15,6 +15,55 @@ const SORT_COLUMNS = [
   'candidate_number'
 ]
 
+const normalizeCandidateFormValue = (key, value) => {
+  if (typeof value !== 'string') return value
+
+  const trimmed = value.trim()
+  if (trimmed === '' || trimmed === 'null' || trimmed === 'nan') return undefined
+
+  if (key === 'candidate_age' && /^\d+$/.test(trimmed)) {
+    return Number(trimmed)
+  }
+
+  if (key === 'is_delete') {
+    const normalized = trimmed.toLowerCase()
+    if (normalized === 'true') return true
+    if (normalized === 'false') return false
+  }
+
+  if (key === 'schedule_interview') {
+    try {
+      return JSON.parse(trimmed)
+    } catch (error) {
+      return value
+    }
+  }
+
+  return value
+}
+
+const normalizeCandidateFormData = (req, res, next) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return next()
+  }
+
+  const normalizedBody = {}
+  Object.keys(req.body).forEach((key) => {
+    normalizedBody[key] = normalizeCandidateFormValue(key, req.body[key])
+  })
+
+  if (!req.files?.candidate_foto) {
+    delete normalizedBody.candidate_foto
+  }
+
+  if (!req.files?.candidate_resume) {
+    delete normalizedBody.candidate_resume
+  }
+
+  req.body = normalizedBody
+  return next()
+}
+
 const createValidation = [
   body('company_id').optional().isUUID().withMessage('company_id harus UUID'),
   body('department_id').optional().isUUID().withMessage('department_id harus UUID'),
@@ -37,6 +86,8 @@ const createValidation = [
   body('candidate_address').optional().isString().withMessage('candidate_address harus berupa teks').trim(),
   body('candidate_foto').optional().isString().withMessage('candidate_foto harus berupa teks').trim(),
   body('candidate_resume').optional().isString().withMessage('candidate_resume harus berupa teks').trim(),
+  body('candidate_foto_is_delete').optional().isBoolean().withMessage('candidate_foto_is_delete harus boolean'),
+  body('candidate_resume_is_delete').optional().isBoolean().withMessage('candidate_resume_is_delete harus boolean'),
   body('schedule_interview').optional().isObject().withMessage('schedule_interview harus berupa object'),
   body('schedule_interview.assign_role').optional().isString().withMessage('assign_role harus berupa teks').trim(),
   body('schedule_interview.schedule_interview_date').optional().isDate().withMessage('schedule_interview_date harus berupa tanggal'),
@@ -76,5 +127,6 @@ module.exports = {
   createValidation,
   updateValidation,
   getByIdValidation,
-  getListValidation
+  getListValidation,
+  normalizeCandidateFormData
 }

@@ -28,6 +28,8 @@ const SELECT_COLUMNS = [
   'candidate_address',
   'candidate_foto',
   'candidate_resume',
+  'candidate_foto_path',
+  'candidate_resume_path',
   'ptk_date',
   'offering_letter',
   'remark',

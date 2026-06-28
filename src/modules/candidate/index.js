@@ -5,10 +5,12 @@ const {
   createValidation,
   updateValidation,
   getByIdValidation,
-  getListValidation
+  getListValidation,
+  normalizeCandidateFormData
 } = require('./validation')
 const { verifyToken } = require('../../middlewares')
 const { validateMiddleware } = require('../../middlewares/validation')
+const { handleCandidateFileUpload } = require('../../middlewares/fileUpload')
 
 /**
  * @route   POST /api/hrm/candidates/get
@@ -31,6 +33,8 @@ router.post(
 router.post(
   '/create',
   verifyToken,
+  handleCandidateFileUpload,
+  normalizeCandidateFormData,
   createValidation,
   validateMiddleware,
   controller.create
@@ -44,6 +48,8 @@ router.post(
 router.put(
   '/:id',
   verifyToken,
+  handleCandidateFileUpload,
+  normalizeCandidateFormData,
   updateValidation,
   validateMiddleware,
   controller.update
