@@ -33,6 +33,7 @@ const scheduleInterviewSchema = require('./schema/schedule_interview');
 const interviewSchema = require('./schema/interview');
 const backgroundCheckSchema = require('./schema/background_check');
 const onBoardDocumentSchema = require('./schema/on_board_document');
+const noteSchema = require('./schema/note');
 
 // Import paths
 // Tambahkan path module Anda di sini
@@ -41,6 +42,7 @@ const scheduleInterviewPaths = require('./path/schedule_interview');
 const interviewPaths = require('./path/interview');
 const backgroundCheckPaths = require('./path/background_check');
 const onBoardDocumentPaths = require('./path/on_board_document');
+const notePaths = require('./path/note');
 
 // Combine all schemas
 const schemas = {
@@ -49,6 +51,7 @@ const schemas = {
   ...interviewSchema,
   ...backgroundCheckSchema,
   ...onBoardDocumentSchema,
+  ...noteSchema,
   // ...yourModuleSchema,
 };
 
@@ -59,6 +62,7 @@ const paths = {
   ...interviewPaths,
   ...backgroundCheckPaths,
   ...onBoardDocumentPaths,
+  ...notePaths,
   // ...yourModulePaths,
 };
 

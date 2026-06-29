@@ -38,6 +38,10 @@ routing.use(`${API_TAG}/hrm/background_check`, backgroundCheckModule)
 const onBoardDocumentModule = require('../../modules/on_board_document')
 routing.use(`${API_TAG}/hrm/on_board_document`, onBoardDocumentModule)
 
+// Note Module
+const noteModule = require('../../modules/note')
+routing.use(`${API_TAG}/hrm/note`, noteModule)
+
 // Tambahkan routes module Anda di sini
 // Example:
 // const yourModule = require('../../modules/yourModule')
