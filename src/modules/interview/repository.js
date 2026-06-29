@@ -126,6 +126,9 @@ const findAll = async (params = {}) => {
 
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
   const data = await filteredQuery
+  const dataWithDetails = await Promise.all(
+    (Array.isArray(data) ? data : []).map((item) => withDetails(item))
+  )
 
   let totalQuery = buildCountQuery(
     pgCore(TABLE_NAME).where({ deleted_at: null }),
@@ -137,7 +140,7 @@ const findAll = async (params = {}) => {
   const totalResult = await totalQuery
   const total = parseInt(totalResult?.count || 0, 10)
 
-  return formatSimplePaginatedResponse(data, queryParams.pagination, total)
+  return formatSimplePaginatedResponse(dataWithDetails, queryParams.pagination, total)
 }
 
 const findById = async (id) => {
