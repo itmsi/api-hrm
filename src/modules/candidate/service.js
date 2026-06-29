@@ -44,6 +44,19 @@ const normalizeDateOnlyValue = (value) => {
   return value
 }
 
+const hasPayloadField = (payload, fieldName) => Object.prototype.hasOwnProperty.call(payload, fieldName)
+
+const normalizePayloadEmptyValue = (value) => {
+  if (value === undefined || value === null) return null
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed === '' || trimmed === 'null' || trimmed === 'nan') {
+      return null
+    }
+  }
+  return value
+}
+
 const calculateOfferingLetterStatus = (offeringLetterValue, ptkDateValue) => {
   const normalizedOfferingLetter = typeof offeringLetterValue === 'string'
     ? offeringLetterValue.trim()
@@ -77,7 +90,7 @@ const calculateOfferingLetterStatus = (offeringLetterValue, ptkDateValue) => {
 
   const start = Date.UTC(ptkDate.year, ptkDate.month - 1, ptkDate.day)
   const end = Date.UTC(offeringLetterDate.year, offeringLetterDate.month - 1, offeringLetterDate.day)
-  const diffInDays = Math.floor((start - end) / (1000 * 60 * 60 * 24))
+  const diffInDays = Math.abs(Math.floor((start - end) / (1000 * 60 * 60 * 24)))
 
   return diffInDays <= 30 ? 'OK' : 'NOT OK'
 }
@@ -116,8 +129,16 @@ const prepareCandidatePayload = async (payload, files, existing = null) => {
   delete data.candidate_foto_is_delete
   delete data.candidate_resume_is_delete
 
-  const offeringLetterValue = data.offering_letter !== undefined ? data.offering_letter : existing?.offering_letter
-  const ptkDateValue = data.ptk_date !== undefined ? data.ptk_date : existing?.ptk_date
+  if (hasPayloadField(data, 'offering_letter')) {
+    data.offering_letter = normalizePayloadEmptyValue(data.offering_letter)
+  }
+
+  if (hasPayloadField(data, 'ptk_date')) {
+    data.ptk_date = normalizePayloadEmptyValue(data.ptk_date)
+  }
+
+  const offeringLetterValue = hasPayloadField(data, 'offering_letter') ? data.offering_letter : existing?.offering_letter
+  const ptkDateValue = hasPayloadField(data, 'ptk_date') ? data.ptk_date : existing?.ptk_date
   data.candidate_status_offering_letter = calculateOfferingLetterStatus(offeringLetterValue, ptkDateValue)
 
   if (shouldDeleteFoto && existing?.candidate_foto_path) {
@@ -166,6 +187,7 @@ const createCandidate = async (candidateData, files, user) => {
   const payload = await prepareCandidatePayload(candidateData, files)
   const createdCandidate = await repository.create({
     ...payload,
+    candidate_status: 'New',
     created_by: authorId,
     updated_by: authorId
   })

@@ -1,4 +1,5 @@
 const repository = require('./repository')
+const candidateRepository = require('../candidate/repository')
 const { uploadBackgroundCheckFile } = require('../../utils/nextcloud')
 
 const getRequesterId = (user) => {
@@ -17,6 +18,14 @@ const normalizeOptionalString = (value) => {
   const trimmed = value.trim()
   if (trimmed === '' || trimmed === 'null' || trimmed === 'nan') return null
   return trimmed
+}
+
+const markCandidateAsComplete = async (candidateId, authorId) => {
+  if (!candidateId) return null
+  return await candidateRepository.update(candidateId, {
+    candidate_status: 'Complete',
+    updated_by: authorId
+  })
 }
 
 const prepareBackgroundCheckPayload = async (payload = {}, files, existing = null) => {
@@ -71,11 +80,15 @@ const getBackgroundCheckById = async (id) => {
 const createBackgroundCheck = async (payload, files, user) => {
   const authorId = getRequesterId(user)
   const preparedPayload = await prepareBackgroundCheckPayload(payload, files)
-  return await repository.create({
+  const createdBackgroundCheck = await repository.create({
     ...preparedPayload,
     created_by: authorId,
     updated_by: authorId
   })
+
+  await markCandidateAsComplete(preparedPayload.candidate_id, authorId)
+
+  return createdBackgroundCheck
 }
 
 const updateBackgroundCheck = async (id, payload, files, user) => {
@@ -85,10 +98,14 @@ const updateBackgroundCheck = async (id, payload, files, user) => {
   }
   const authorId = getRequesterId(user)
   const preparedPayload = await prepareBackgroundCheckPayload(payload, files, existing)
-  return await repository.update(id, {
+  const updatedBackgroundCheck = await repository.update(id, {
     ...preparedPayload,
     updated_by: authorId
   })
+
+  await markCandidateAsComplete(preparedPayload.candidate_id, authorId)
+
+  return updatedBackgroundCheck
 }
 
 const deleteBackgroundCheck = async (id, user) => {
