@@ -69,15 +69,15 @@ const SELECT_COLUMNS = [
   'gate_sso_titles.title_name'
 ]
 const ALLOWED_SORT_COLUMNS = [
-  'created_at',
-  'candidate_name',
-  'candidate_email',
-  'candidate_number'
+  'candidates.created_at',
+  'candidates.candidate_name',
+  'candidates.candidate_email',
+  'candidates.candidate_number'
 ]
 const SEARCHABLE_COLUMNS = [
-  'candidate_name',
-  'candidate_email',
-  'candidate_number'
+  'candidates.candidate_name',
+  'candidates.candidate_email',
+  'candidates.candidate_number'
 ]
 const ALLOWED_FILTER_COLUMNS = [
   'group_id',
@@ -113,6 +113,75 @@ const createBaseQuery = () => {
   return pgCore(TABLE_NAME)
 }
 
+const resolveFilterColumn = (filterKey) => {
+  const normalizedKey = String(filterKey || '').trim()
+  const aliases = {
+    group_id: 'candidates.group_id',
+    company_id: 'candidates.company_id',
+    department_id: 'candidates.department_id',
+    title_id: 'candidates.title_id',
+    candidate_status: 'candidates.candidate_status',
+    candidate_status_offering_letter: 'candidates.candidate_status_offering_letter',
+    assign_role: 'assign_role',
+    'candidates.group_id': 'candidates.group_id',
+    'candidates.company_id': 'candidates.company_id',
+    'candidates.department_id': 'candidates.department_id',
+    'candidates.title_id': 'candidates.title_id',
+    'candidates.candidate_status': 'candidates.candidate_status',
+    'candidates.candidate_status_offering_letter': 'candidates.candidate_status_offering_letter',
+    'candidates.assign_role': 'assign_role'
+  }
+
+  return aliases[normalizedKey] || normalizedKey
+}
+
+const applyCandidateListFilters = (baseQuery, queryParams, assignRoleFilter) => {
+  let query = baseQuery
+
+  if (queryParams.search.searchTerm && queryParams.search.searchableColumns.length > 0) {
+    query = query.where(function () {
+      queryParams.search.searchableColumns.forEach((column, index) => {
+        if (index === 0) {
+          this.where(column, 'ilike', `%${queryParams.search.searchTerm}%`)
+        } else {
+          this.orWhere(column, 'ilike', `%${queryParams.search.searchTerm}%`)
+        }
+      })
+    })
+  }
+
+  Object.keys(queryParams.filters).forEach((filterKey) => {
+    const filterValue = queryParams.filters[filterKey]
+    if (filterValue !== undefined && filterValue !== '') {
+      const resolvedFilterKey = resolveFilterColumn(filterKey)
+      if (resolvedFilterKey === 'assign_role') {
+        query = query.whereRaw("schedule_interview->>'assign_role' ILIKE ?", [`%${filterValue}%`])
+      } else if (filterKey === 'name' || filterKey === 'status') {
+        query = query.where(resolvedFilterKey, 'ilike', `%${filterValue}%`)
+      } else {
+        query = query.where(resolvedFilterKey, filterValue)
+      }
+    }
+  })
+
+  if (assignRoleFilter) {
+    query = query.whereRaw("schedule_interview->>'assign_role' ILIKE ?", [`%${assignRoleFilter}%`])
+  }
+
+  return query
+}
+
+const applyCandidateStatusOfferingCountFilters = (baseQuery, queryParams) => {
+  let query = baseQuery
+  const groupIdFilter = queryParams.filters.group_id ?? queryParams.filters['candidates.group_id']
+
+  if (groupIdFilter !== undefined && groupIdFilter !== '') {
+    query = query.where(resolveFilterColumn('group_id'), groupIdFilter)
+  }
+
+  return query
+}
+
 const findAll = async (params = {}) => {
   const queryParams = parseStandardQuery(
     { body: params },
@@ -136,30 +205,47 @@ const findAll = async (params = {}) => {
 
   const baseQuery = createSelectQuery()
     .where({ 'candidates.deleted_at': null })
-  const filteredQuery = applyStandardFilters(baseQuery, queryParams)
+  const filteredQuery = applyCandidateListFilters(baseQuery, queryParams, assignRoleFilter)
+  const data = await filteredQuery
+    .orderBy(queryParams.sorting.sortBy, queryParams.sorting.sortOrder)
+    .limit(queryParams.pagination.limit)
+    .offset(queryParams.pagination.offset)
 
-  let query = filteredQuery
-  if (assignRoleFilter) {
-    query = query.whereRaw("schedule_interview->>'assign_role' ILIKE ?", [`%${assignRoleFilter}%`])
-  }
-
-  const data = await query
-  let totalQuery = buildCountQuery(
+  const totalQuery = applyCandidateListFilters(
     createBaseQuery().where({ 'candidates.deleted_at': null }),
-    queryParams
+    queryParams,
+    assignRoleFilter
   )
     .count('candidates.candidate_id as count')
     .first()
 
-  if (assignRoleFilter) {
-    totalQuery = totalQuery.whereRaw("schedule_interview->>'assign_role' ILIKE ?", [`%${assignRoleFilter}%`])
-  }
+  const countsQuery = applyCandidateStatusOfferingCountFilters(
+    createBaseQuery().where({ 'candidates.deleted_at': null }),
+    queryParams
+  )
+    .select(
+      pgCore.raw('count(*) as all_count'),
+      pgCore.raw("count(case when candidates.candidate_status_offering_letter = 'OK' then 1 end) as ok_count"),
+      pgCore.raw("count(case when candidates.candidate_status_offering_letter = 'NOT OK' then 1 end) as not_ok_count"),
+      pgCore.raw("count(case when candidates.candidate_status_offering_letter is null or trim(candidates.candidate_status_offering_letter) = '' then 1 end) as null_count")
+    )
+    .first()
 
-  const totalResult = await totalQuery
+  const [totalResult, countsResult] = await Promise.all([totalQuery, countsQuery])
 
   const total = parseInt(totalResult?.count || 0, 10)
   const formattedData = formatCandidateRows(data)
-  return formatSimplePaginatedResponse(formattedData, queryParams.pagination, total)
+  const paginatedResponse = formatSimplePaginatedResponse(formattedData, queryParams.pagination, total)
+
+  return {
+    ...paginatedResponse,
+    candidate_status_offering_count: {
+      all: parseInt(countsResult?.all_count || 0, 10),
+      ok: parseInt(countsResult?.ok_count || 0, 10),
+      not_ok: parseInt(countsResult?.not_ok_count || 0, 10),
+      null: parseInt(countsResult?.null_count || 0, 10)
+    }
+  }
 }
 
 const findById = async (id) => {
