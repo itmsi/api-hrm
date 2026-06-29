@@ -34,8 +34,8 @@ COPY --chown=node:node --from=builder /app ./
 # Create runtime directories if not exist, and give node ownership
 RUN mkdir -p logs public storages
 
-# Expose port (default 9581, configurable via docker-compose)
-EXPOSE 9581
+# Expose port (default 9583, configurable via docker-compose)
+EXPOSE 9583
 
 # Start the application using OpenTelemetry node --require 
 # to initialize tracing hooks before express starts

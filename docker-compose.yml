@@ -1,7 +1,7 @@
 services:
   api:
-    container_name: api-netsuite
-    image: api-netsuite
+    container_name: api-hrm
+    image: api-hrm
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,7 +11,7 @@ services:
       - .env
     restart: unless-stopped
     ports:
-      - "9581:9581"
+      - "9583:9583"
     volumes:
       - ./logs:/app/logs
       - ./public:/app/public
@@ -22,9 +22,9 @@ services:
     environment:
       # Override untuk production server
       - NODE_ENV=production
-      - APP_PORT=9581
-      - SERVICE_NAME=api-netsuite
-      - DATABASE_URL=${DATABASE_URL}?application_name=api-netsuite
+      - APP_PORT=9583
+      - SERVICE_NAME=api-hrm
+      - DATABASE_URL=${DATABASE_URL}?application_name=api-hrm
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4318}
       # RABBITMQ_URL akan diambil dari file .env via env_file
       # Override database host jika database di container/service lain (contoh)
@@ -48,7 +48,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     healthcheck:
-      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:9581/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" ]
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:9583/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" ]
       interval: 30s
       timeout: 10s
       retries: 3
