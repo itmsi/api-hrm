@@ -1,5 +1,6 @@
 const axios = require('axios')
 const path = require('path')
+const candidateRepository = require('../modules/candidate/repository')
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), override: true })
 
@@ -167,8 +168,57 @@ const uploadCandidateFile = async (candidateNumber, fieldName, file) => {
   }
 }
 
+const uploadBackgroundCheckFile = async (candidateId, fieldName, file) => {
+  if (!candidateId) {
+    throw new Error('candidate_id harus diisi untuk upload background check')
+  }
+
+  if (!file || !file.buffer) {
+    return null
+  }
+
+  const candidate = await candidateRepository.findById(candidateId)
+  const candidateNumber = candidate?.candidate_number || candidateId
+
+  if (!candidateNumber) {
+    throw new Error('candidate_number tidak ditemukan untuk candidate_id ini')
+  }
+
+  const config = getConfig()
+  const folderPath = posix.join(config.uploadDir, String(candidateNumber), 'background_checks')
+  console.log('Nextcloud background check upload target', {
+    folderPath,
+    candidateId,
+    candidateNumber,
+    fieldName,
+    originalname: file.originalname,
+    mimetype: file.mimetype
+  })
+  await ensureFolderExists(folderPath)
+
+  const filename = sanitizeFileName(file.originalname || `${fieldName}`)
+  const targetPath = posix.join(folderPath, filename)
+  console.log('Nextcloud background check upload path', targetPath)
+  await uploadToWebdav(targetPath, file.buffer, file.mimetype)
+
+  try {
+    const shareUrl = await createShareLink(targetPath)
+    return {
+      url: shareUrl || makeUrl(config.webdavPath, targetPath),
+      path: targetPath
+    }
+  } catch (error) {
+    console.error('Nextcloud share fallback used for', targetPath, error?.message)
+    return {
+      url: makeUrl(config.webdavPath, targetPath),
+      path: targetPath
+    }
+  }
+}
+
 module.exports = {
   getConfig,
   uploadCandidateFile,
+  uploadBackgroundCheckFile,
   deleteFromWebdav
 }

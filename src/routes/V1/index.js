@@ -30,6 +30,10 @@ routing.use(`${API_TAG}/hrm/schedule_interview`, scheduleInterviewModule)
 const interviewModule = require('../../modules/interview')
 routing.use(`${API_TAG}/hrm/interviews`, interviewModule)
 
+// Background Check Module
+const backgroundCheckModule = require('../../modules/background_check')
+routing.use(`${API_TAG}/hrm/background_check`, backgroundCheckModule)
+
 // Tambahkan routes module Anda di sini
 // Example:
 // const yourModule = require('../../modules/yourModule')

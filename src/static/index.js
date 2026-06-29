@@ -31,18 +31,21 @@ const servers = [
 const candidateSchema = require('./schema/candidate');
 const scheduleInterviewSchema = require('./schema/schedule_interview');
 const interviewSchema = require('./schema/interview');
+const backgroundCheckSchema = require('./schema/background_check');
 
 // Import paths
 // Tambahkan path module Anda di sini
 const candidatePaths = require('./path/candidate');
 const scheduleInterviewPaths = require('./path/schedule_interview');
 const interviewPaths = require('./path/interview');
+const backgroundCheckPaths = require('./path/background_check');
 
 // Combine all schemas
 const schemas = {
   ...candidateSchema,
   ...scheduleInterviewSchema,
   ...interviewSchema,
+  ...backgroundCheckSchema,
   // ...yourModuleSchema,
 };
 
@@ -51,6 +54,7 @@ const paths = {
   ...candidatePaths,
   ...scheduleInterviewPaths,
   ...interviewPaths,
+  ...backgroundCheckPaths,
   // ...yourModulePaths,
 };
 
