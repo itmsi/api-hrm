@@ -1,13 +1,13 @@
 /**
- * Swagger API Path Definitions for Schedule Interview Module
+ * Swagger API Path Definitions for Interview Module
  */
 
-const scheduleInterviewPaths = {
-  '/schedule_interview/get': {
+const interviewPaths = {
+  '/interviews/get': {
     post: {
-      tags: ['Schedule Interviews'],
-      summary: 'Get schedule interviews list',
-      description: 'Retrieve schedule interviews with pagination, search, and sorting',
+      tags: ['Interviews'],
+      summary: 'Get interviews list',
+      description: 'Retrieve interviews with pagination, search, and sorting',
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -21,7 +21,7 @@ const scheduleInterviewPaths = {
                 search: { type: 'string', example: '' },
                 sort_by: { type: 'string', example: 'created_at' },
                 sort_order: { type: 'string', example: 'desc' },
-                candidate_id: { type: 'string', nullable: true, example: '' }
+                schedule_interview_id: { type: 'string', nullable: true, example: '' }
               }
             }
           }
@@ -41,7 +41,7 @@ const scheduleInterviewPaths = {
                     properties: {
                       data: {
                         type: 'array',
-                        items: { $ref: '#/components/schemas/ScheduleInterview' }
+                        items: { $ref: '#/components/schemas/Interview' }
                       },
                       pagination: {
                         type: 'object',
@@ -62,17 +62,17 @@ const scheduleInterviewPaths = {
       }
     }
   },
-  '/schedule_interview/create': {
+  '/interviews/create': {
     post: {
-      tags: ['Schedule Interviews'],
-      summary: 'Create schedule interview',
-      description: 'Create a new schedule interview record',
+      tags: ['Interviews'],
+      summary: 'Create interview',
+      description: 'Create a new interview and its details',
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
         content: {
           'application/json': {
-            schema: { $ref: '#/components/schemas/ScheduleInterviewInput' }
+            schema: { $ref: '#/components/schemas/InterviewInput' }
           }
         }
       },
@@ -85,8 +85,8 @@ const scheduleInterviewPaths = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  data: { $ref: '#/components/schemas/ScheduleInterview' },
-                  message: { type: 'string', example: 'Data schedule interview berhasil dibuat' }
+                  data: { $ref: '#/components/schemas/Interview' },
+                  message: { type: 'string', example: 'Data interview berhasil dibuat' }
                 }
               }
             }
@@ -95,18 +95,18 @@ const scheduleInterviewPaths = {
       }
     }
   },
-  '/schedule_interview/{id}': {
+  '/interviews/{id}': {
     get: {
-      tags: ['Schedule Interviews'],
-      summary: 'Get schedule interview by ID',
-      description: 'Retrieve a single schedule interview by ID',
+      tags: ['Interviews'],
+      summary: 'Get interview by ID',
+      description: 'Retrieve a single interview by ID',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
           name: 'id',
           in: 'path',
           required: true,
-          description: 'Schedule interview UUID',
+          description: 'Interview UUID',
           schema: { type: 'string', format: 'uuid' }
         }
       ],
@@ -119,7 +119,7 @@ const scheduleInterviewPaths = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  data: { $ref: '#/components/schemas/ScheduleInterview' }
+                  data: { $ref: '#/components/schemas/Interview' }
                 }
               }
             }
@@ -128,16 +128,16 @@ const scheduleInterviewPaths = {
       }
     },
     put: {
-      tags: ['Schedule Interviews'],
-      summary: 'Update schedule interview',
-      description: 'Update an existing schedule interview',
+      tags: ['Interviews'],
+      summary: 'Update interview',
+      description: 'Update an existing interview and its details',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
           name: 'id',
           in: 'path',
           required: true,
-          description: 'Schedule interview UUID',
+          description: 'Interview UUID',
           schema: { type: 'string', format: 'uuid' }
         }
       ],
@@ -145,7 +145,7 @@ const scheduleInterviewPaths = {
         required: true,
         content: {
           'application/json': {
-            schema: { $ref: '#/components/schemas/ScheduleInterviewInput' }
+            schema: { $ref: '#/components/schemas/InterviewInput' }
           }
         }
       },
@@ -158,8 +158,8 @@ const scheduleInterviewPaths = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  data: { $ref: '#/components/schemas/ScheduleInterview' },
-                  message: { type: 'string', example: 'Data schedule interview berhasil diupdate' }
+                  data: { $ref: '#/components/schemas/Interview' },
+                  message: { type: 'string', example: 'Data interview berhasil diupdate' }
                 }
               }
             }
@@ -168,16 +168,16 @@ const scheduleInterviewPaths = {
       }
     },
     delete: {
-      tags: ['Schedule Interviews'],
-      summary: 'Delete schedule interview',
-      description: 'Soft delete a schedule interview',
+      tags: ['Interviews'],
+      summary: 'Delete interview',
+      description: 'Soft delete an interview and its details',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
           name: 'id',
           in: 'path',
           required: true,
-          description: 'Schedule interview UUID',
+          description: 'Interview UUID',
           schema: { type: 'string', format: 'uuid' }
         }
       ],
@@ -190,7 +190,7 @@ const scheduleInterviewPaths = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  message: { type: 'string', example: 'Data schedule interview berhasil dihapus' }
+                  message: { type: 'string', example: 'Data interview berhasil dihapus' }
                 }
               }
             }
@@ -201,4 +201,4 @@ const scheduleInterviewPaths = {
   }
 }
 
-module.exports = scheduleInterviewPaths
+module.exports = interviewPaths
