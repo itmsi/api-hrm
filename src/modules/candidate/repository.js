@@ -8,42 +8,46 @@ const {
 
 const TABLE_NAME = 'candidates'
 const SELECT_COLUMNS = [
-  'candidate_id',
-  'company_id',
-  'department_id',
-  'title_id',
-  'candidate_number',
-  'candidate_name',
-  'candidate_email',
-  'candidate_phone',
-  'candidate_religion',
-  'candidate_gender',
-  'candidate_marital_status',
-  'candidate_age',
-  'candidate_date_birth',
-  'candidate_nationality',
-  'candidate_city',
-  'candidate_state',
-  'candidate_country',
-  'candidate_address',
-  'candidate_foto',
-  'candidate_resume',
-  'candidate_foto_path',
-  'candidate_resume_path',
-  'ptk_date',
-  'offering_letter',
-  'remark',
-  'schedule_interview',
-  'group_id',
-  'candidate_status',
-  'candidate_status_offering_letter',
-  'created_at',
-  'created_by',
-  'updated_at',
-  'updated_by',
-  'deleted_at',
-  'deleted_by',
-  'is_delete'
+  'candidates.candidate_id',
+  'candidates.company_id',
+  'candidates.department_id',
+  'candidates.title_id',
+  'candidates.candidate_number',
+  'candidates.candidate_name',
+  'candidates.candidate_email',
+  'candidates.candidate_phone',
+  'candidates.candidate_religion',
+  'candidates.candidate_gender',
+  'candidates.candidate_marital_status',
+  'candidates.candidate_age',
+  'candidates.candidate_date_birth',
+  'candidates.candidate_nationality',
+  'candidates.candidate_city',
+  'candidates.candidate_state',
+  'candidates.candidate_country',
+  'candidates.candidate_address',
+  'candidates.candidate_foto',
+  'candidates.candidate_resume',
+  'candidates.candidate_foto_path',
+  'candidates.candidate_resume_path',
+  'candidates.ptk_date',
+  'candidates.offering_letter',
+  'candidates.remark',
+  'candidates.schedule_interview',
+  'candidates.group_id',
+  'candidates.candidate_status',
+  'candidates.candidate_status_offering_letter',
+  'candidates.created_at',
+  'candidates.created_by',
+  'candidates.updated_at',
+  'candidates.updated_by',
+  'candidates.deleted_at',
+  'candidates.deleted_by',
+  'candidates.is_delete',
+  'gate_sso_groups.group_name',
+  'gate_sso_companies.company_name',
+  'gate_sso_departments.department_name',
+  'gate_sso_titles.title_name'
 ]
 const ALLOWED_SORT_COLUMNS = [
   'created_at',
@@ -95,7 +99,13 @@ const findAll = async (params = {}) => {
     delete queryParams.filters.assign_role
   }
 
-  const baseQuery = pgCore(TABLE_NAME).select(SELECT_COLUMNS).where({ deleted_at: null })
+  const baseQuery = pgCore(TABLE_NAME)
+    .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_groups', 'gate_sso_groups.group_id', 'candidates.group_id')
+    .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
+    .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
+    .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+    .where({ 'candidates.deleted_at': null })
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
 
   let query = filteredQuery
@@ -105,10 +115,15 @@ const findAll = async (params = {}) => {
 
   const data = await query
   let totalQuery = buildCountQuery(
-    pgCore(TABLE_NAME).where({ deleted_at: null }),
+    pgCore(TABLE_NAME)
+      .leftJoin('gate_sso_groups', 'gate_sso_groups.group_id', 'candidates.group_id')
+      .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
+      .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
+      .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+      .where({ 'candidates.deleted_at': null }),
     queryParams
   )
-    .count('candidate_id as count')
+    .count('candidates.candidate_id as count')
     .first()
 
   if (assignRoleFilter) {
