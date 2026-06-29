@@ -7,6 +7,25 @@ const {
 } = require('../../utils/standard_query')
 
 const TABLE_NAME = 'candidates'
+const formatCandidateNumber = (value) => {
+  if (value === undefined || value === null || value === '') return null
+  return `CAND-${value}`
+}
+
+const formatCandidateRows = (rows) => {
+  if (!rows) return rows
+  if (Array.isArray(rows)) {
+    return rows.map((row) => ({
+      ...row,
+      candidate_number: formatCandidateNumber(row.candidate_number)
+    }))
+  }
+  return {
+    ...rows,
+    candidate_number: formatCandidateNumber(rows.candidate_number)
+  }
+}
+
 const SELECT_COLUMNS = [
   'candidates.candidate_id',
   'candidates.company_id',
@@ -86,6 +105,14 @@ const applyReferenceJoins = (query) => {
     .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
 }
 
+const createSelectQuery = () => {
+  return applyReferenceJoins(pgCore(TABLE_NAME).select(SELECT_COLUMNS))
+}
+
+const createBaseQuery = () => {
+  return pgCore(TABLE_NAME)
+}
+
 const findAll = async (params = {}) => {
   const queryParams = parseStandardQuery(
     { body: params },
@@ -107,7 +134,7 @@ const findAll = async (params = {}) => {
     delete queryParams.filters.assign_role
   }
 
-  const baseQuery = applyReferenceJoins(pgCore(TABLE_NAME).select(SELECT_COLUMNS))
+  const baseQuery = createSelectQuery()
     .where({ 'candidates.deleted_at': null })
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
 
@@ -118,7 +145,7 @@ const findAll = async (params = {}) => {
 
   const data = await query
   let totalQuery = buildCountQuery(
-    applyReferenceJoins(pgCore(TABLE_NAME)).where({ 'candidates.deleted_at': null }),
+    createBaseQuery().where({ 'candidates.deleted_at': null }),
     queryParams
   )
     .count('candidates.candidate_id as count')
@@ -131,13 +158,15 @@ const findAll = async (params = {}) => {
   const totalResult = await totalQuery
 
   const total = parseInt(totalResult?.count || 0, 10)
-  return formatSimplePaginatedResponse(data, queryParams.pagination, total)
+  const formattedData = formatCandidateRows(data)
+  return formatSimplePaginatedResponse(formattedData, queryParams.pagination, total)
 }
 
 const findById = async (id) => {
-  return await applyReferenceJoins(pgCore(TABLE_NAME).select(SELECT_COLUMNS))
+  const row = await createSelectQuery()
     .where({ candidate_id: id, 'candidates.deleted_at': null })
     .first()
+  return formatCandidateRows(row)
 }
 
 const create = async (data) => {
@@ -148,8 +177,11 @@ const create = async (data) => {
     is_delete: false
   }
 
-  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME).insert(payload)).returning(SELECT_COLUMNS)
-  return result
+  const [insertedId] = await createBaseQuery().insert(payload).returning('candidate_id')
+  const result = await createSelectQuery()
+    .where({ candidate_id: insertedId.candidate_id, 'candidates.deleted_at': null })
+    .first()
+  return formatCandidateRows(result)
 }
 
 const update = async (id, data) => {
@@ -158,15 +190,23 @@ const update = async (id, data) => {
     updated_at: pgCore.fn.now()
   }
 
-  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME))
+  const [result] = await createBaseQuery()
     .where({ candidate_id: id, deleted_at: null })
     .update(payload)
-    .returning(SELECT_COLUMNS)
-  return result
+    .returning('candidate_id')
+
+  if (!result?.candidate_id) {
+    return null
+  }
+
+  const updatedRow = await createSelectQuery()
+    .where({ candidate_id: result.candidate_id, 'candidates.deleted_at': null })
+    .first()
+  return formatCandidateRows(updatedRow)
 }
 
 const remove = async (id, deletedBy) => {
-  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME))
+  const [result] = await createBaseQuery()
     .where({ candidate_id: id, deleted_at: null })
     .update({
       deleted_at: pgCore.fn.now(),
@@ -174,8 +214,16 @@ const remove = async (id, deletedBy) => {
       updated_at: pgCore.fn.now(),
       is_delete: true
     })
-    .returning(SELECT_COLUMNS)
-  return result
+    .returning('candidate_id')
+
+  if (!result?.candidate_id) {
+    return null
+  }
+
+  const deletedRow = await createSelectQuery()
+    .where({ candidate_id: result.candidate_id, 'candidates.deleted_at': null })
+    .first()
+  return formatCandidateRows(deletedRow)
 }
 
 module.exports = {

@@ -257,10 +257,10 @@ const candidateSchemas = {
         format: 'uuid',
         nullable: true
       },
-      candidate_number: {
-        type: 'string',
-        nullable: true
-      },
+      // candidate_number: {
+      //   type: 'string',
+      //   nullable: true
+      // },
       candidate_name: {
         type: 'string',
         nullable: true
@@ -337,11 +337,11 @@ const candidateSchemas = {
         nullable: true,
         description: 'Set to true to delete the existing candidate resume from Nextcloud and clear DB values'
       },
-      schedule_interview: {
-        type: 'string',
-        nullable: true,
-        description: 'JSON string for interview schedule details'
-      },
+      // schedule_interview: {
+      //   type: 'string',
+      //   nullable: true,
+      //   description: 'JSON string for interview schedule details'
+      // },
       ptk_date: {
         type: 'string',
         format: 'date',
@@ -361,18 +361,18 @@ const candidateSchemas = {
         format: 'uuid',
         nullable: true
       },
-      candidate_status: {
-        type: 'string',
-        nullable: true
-      },
-      candidate_status_offering_letter: {
-        type: 'string',
-        nullable: true
-      },
-      is_delete: {
-        type: 'boolean',
-        nullable: true
-      }
+      // candidate_status: {
+      //   type: 'string',
+      //   nullable: true
+      // },
+      // candidate_status_offering_letter: {
+      //   type: 'string',
+      //   nullable: true
+      // },
+      // is_delete: {
+      //   type: 'boolean',
+      //   nullable: true
+      // }
     }
   },
   CandidateInput: {

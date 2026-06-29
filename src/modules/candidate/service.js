@@ -28,6 +28,67 @@ const parseScheduleInterview = (payload) => {
   return payload
 }
 
+const normalizeDateOnlyValue = (value) => {
+  if (!value) return null
+  if (value instanceof Date) {
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`
+    }
+    return trimmed
+  }
+  return value
+}
+
+const calculateOfferingLetterStatus = (offeringLetterValue, ptkDateValue) => {
+  const normalizedOfferingLetter = typeof offeringLetterValue === 'string'
+    ? offeringLetterValue.trim()
+    : offeringLetterValue
+
+  if (!normalizedOfferingLetter) {
+    return null
+  }
+
+  const normalizedPtkDate = normalizeDateOnlyValue(ptkDateValue)
+  if (!normalizedPtkDate) {
+    return null
+  }
+
+  const parseDateParts = (dateValue) => {
+    const match = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!match) return null
+    return {
+      year: parseInt(match[1], 10),
+      month: parseInt(match[2], 10),
+      day: parseInt(match[3], 10)
+    }
+  }
+
+  const offeringLetterDate = parseDateParts(normalizeDateOnlyValue(offeringLetterValue))
+  const ptkDate = parseDateParts(normalizedPtkDate)
+
+  if (!offeringLetterDate || !ptkDate) {
+    return null
+  }
+
+  const start = Date.UTC(ptkDate.year, ptkDate.month - 1, ptkDate.day)
+  const end = Date.UTC(offeringLetterDate.year, offeringLetterDate.month - 1, offeringLetterDate.day)
+  const diffInDays = Math.floor((start - end) / (1000 * 60 * 60 * 24))
+
+  return diffInDays <= 30 ? 'OK' : 'NOT OK'
+}
+
+const buildCandidateNumberLabel = (value) => {
+  if (value === undefined || value === null || value === '') return null
+  const stringValue = String(value).trim()
+  if (stringValue.startsWith('CAND-')) return stringValue
+  return `CAND-${stringValue}`
+}
+
 const prepareCandidatePayload = async (payload, files, existing = null) => {
   const data = parseScheduleInterview({ ...payload })
   const candidateNumber = data.candidate_number || existing?.candidate_number
@@ -55,9 +116,9 @@ const prepareCandidatePayload = async (payload, files, existing = null) => {
   delete data.candidate_foto_is_delete
   delete data.candidate_resume_is_delete
 
-  if ((!candidateNumber || candidateNumber.trim() === '') && (fotoFile || resumeFile)) {
-    throw { message: 'candidate_number harus diisi saat mengunggah file', statusCode: 400 }
-  }
+  const offeringLetterValue = data.offering_letter !== undefined ? data.offering_letter : existing?.offering_letter
+  const ptkDateValue = data.ptk_date !== undefined ? data.ptk_date : existing?.ptk_date
+  data.candidate_status_offering_letter = calculateOfferingLetterStatus(offeringLetterValue, ptkDateValue)
 
   if (shouldDeleteFoto && existing?.candidate_foto_path) {
     try {
@@ -67,12 +128,6 @@ const prepareCandidatePayload = async (payload, files, existing = null) => {
     }
     data.candidate_foto = null
     data.candidate_foto_path = null
-  } else if (fotoFile) {
-    const uploadedFoto = await uploadCandidateFile(candidateNumber, 'candidate_foto', fotoFile)
-    if (uploadedFoto) {
-      data.candidate_foto = uploadedFoto.url
-      data.candidate_foto_path = uploadedFoto.path
-    }
   } else if (existing?.candidate_foto) {
     data.candidate_foto = existing.candidate_foto
     data.candidate_foto_path = existing.candidate_foto_path
@@ -86,12 +141,6 @@ const prepareCandidatePayload = async (payload, files, existing = null) => {
     }
     data.candidate_resume = null
     data.candidate_resume_path = null
-  } else if (resumeFile) {
-    const uploadedResume = await uploadCandidateFile(candidateNumber, 'candidate_resume', resumeFile)
-    if (uploadedResume) {
-      data.candidate_resume = uploadedResume.url
-      data.candidate_resume_path = uploadedResume.path
-    }
   } else if (existing?.candidate_resume) {
     data.candidate_resume = existing.candidate_resume
     data.candidate_resume_path = existing.candidate_resume_path
@@ -115,9 +164,44 @@ const getCandidateById = async (id) => {
 const createCandidate = async (candidateData, files, user) => {
   const authorId = getRequesterId(user)
   const payload = await prepareCandidatePayload(candidateData, files)
-  return await repository.create({
+  const createdCandidate = await repository.create({
     ...payload,
     created_by: authorId,
+    updated_by: authorId
+  })
+
+  const candidateNumber = createdCandidate?.candidate_number
+  const uploadCandidateNumber = buildCandidateNumberLabel(candidateNumber)
+  if (!uploadCandidateNumber) {
+    return createdCandidate
+  }
+
+  const photoFile = getUploadedFile(files, 'candidate_foto')
+  const resumeFile = getUploadedFile(files, 'candidate_resume')
+  const hasFiles = Boolean(photoFile || resumeFile)
+
+  if (!hasFiles) {
+    return createdCandidate
+  }
+
+  const updatedPayload = { ...payload }
+  if (photoFile) {
+    const uploadedFoto = await uploadCandidateFile(uploadCandidateNumber, 'candidate_foto', photoFile)
+    if (uploadedFoto) {
+      updatedPayload.candidate_foto = uploadedFoto.url
+      updatedPayload.candidate_foto_path = uploadedFoto.path
+    }
+  }
+  if (resumeFile) {
+    const uploadedResume = await uploadCandidateFile(uploadCandidateNumber, 'candidate_resume', resumeFile)
+    if (uploadedResume) {
+      updatedPayload.candidate_resume = uploadedResume.url
+      updatedPayload.candidate_resume_path = uploadedResume.path
+    }
+  }
+
+  return await repository.update(createdCandidate.candidate_id, {
+    ...updatedPayload,
     updated_by: authorId
   })
 }
@@ -129,8 +213,43 @@ const updateCandidate = async (id, candidateData, files, user) => {
   }
   const authorId = getRequesterId(user)
   const payload = await prepareCandidatePayload(candidateData, files, existing)
-  return await repository.update(id, {
+  const updatedCandidate = await repository.update(id, {
     ...payload,
+    updated_by: authorId
+  })
+
+  const candidateNumber = updatedCandidate?.candidate_number
+  const uploadCandidateNumber = buildCandidateNumberLabel(candidateNumber)
+  if (!uploadCandidateNumber) {
+    return updatedCandidate
+  }
+
+  const photoFile = getUploadedFile(files, 'candidate_foto')
+  const resumeFile = getUploadedFile(files, 'candidate_resume')
+  const hasFiles = Boolean(photoFile || resumeFile)
+
+  if (!hasFiles) {
+    return updatedCandidate
+  }
+
+  const updatedPayload = { ...payload }
+  if (photoFile) {
+    const uploadedFoto = await uploadCandidateFile(uploadCandidateNumber, 'candidate_foto', photoFile)
+    if (uploadedFoto) {
+      updatedPayload.candidate_foto = uploadedFoto.url
+      updatedPayload.candidate_foto_path = uploadedFoto.path
+    }
+  }
+  if (resumeFile) {
+    const uploadedResume = await uploadCandidateFile(uploadCandidateNumber, 'candidate_resume', resumeFile)
+    if (uploadedResume) {
+      updatedPayload.candidate_resume = uploadedResume.url
+      updatedPayload.candidate_resume_path = uploadedResume.path
+    }
+  }
+
+  return await repository.update(id, {
+    ...updatedPayload,
     updated_by: authorId
   })
 }

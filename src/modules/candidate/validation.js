@@ -25,6 +25,10 @@ const normalizeCandidateFormValue = (key, value) => {
     return Number(trimmed)
   }
 
+  if (key === 'candidate_number' && /^\d+$/.test(trimmed)) {
+    return Number(trimmed)
+  }
+
   if (key === 'is_delete') {
     const normalized = trimmed.toLowerCase()
     if (normalized === 'true') return true
@@ -76,7 +80,10 @@ const createValidation = [
   body('candidate_age').optional().isInt({ min: 0 }).withMessage('candidate_age harus angka positif'),
   body('candidate_gender').optional().isString().withMessage('candidate_gender harus berupa teks').trim(),
   body('candidate_marital_status').optional().isString().withMessage('candidate_marital_status harus berupa teks').trim(),
-  body('candidate_number').optional().isString().withMessage('candidate_number harus berupa teks').trim(),
+  body('candidate_number').optional().custom((value) => {
+    if (value === undefined || value === null || value === '') return true
+    return Number.isInteger(Number(value)) && Number(value) >= 0
+  }).withMessage('candidate_number harus berupa angka positif'),
   body('candidate_name').optional().isString().withMessage('candidate_name harus berupa teks').trim(),
   body('candidate_religion').optional().isString().withMessage('candidate_religion harus berupa teks').trim(),
   body('candidate_nationality').optional().isString().withMessage('candidate_nationality harus berupa teks').trim(),
