@@ -61,6 +61,10 @@ const uploadBackgroundCheckFiles = upload.fields([
   { name: 'file_attachment', maxCount: 1 }
 ]);
 
+const uploadOnBoardDocumentFiles = upload.fields([
+  { name: 'on_board_documents_file', maxCount: 1 }
+]);
+
 const handleFileUpload = (req, res, next) => {
   uploadSingleFile(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -160,6 +164,39 @@ const handleBackgroundCheckFileUpload = (req, res, next) => {
   });
 };
 
+const handleOnBoardDocumentFileUpload = (req, res, next) => {
+  uploadOnBoardDocumentFiles(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum size is 50MB.',
+          error: err.message
+        });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({
+          success: false,
+          message: 'Too many files. Only one file is allowed.',
+          error: err.message
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'File upload error',
+        error: err.message
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: 'File validation error',
+        error: err.message
+      });
+    }
+    next();
+  });
+};
+
 // Generate unique filename
 const generateFileName = (originalName) => {
   const timestamp = Date.now();
@@ -194,6 +231,7 @@ module.exports = {
   handleFileUpload,
   handleCandidateFileUpload,
   handleBackgroundCheckFileUpload,
+  handleOnBoardDocumentFileUpload,
   generateFileName,
   getContentType
 };

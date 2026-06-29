@@ -216,9 +216,58 @@ const uploadBackgroundCheckFile = async (candidateId, fieldName, file) => {
   }
 }
 
+const uploadOnBoardDocumentFile = async (candidateId, fieldName, file) => {
+  if (!candidateId) {
+    throw new Error('candidate_id harus diisi untuk upload on board document')
+  }
+
+  if (!file || !file.buffer) {
+    return null
+  }
+
+  const candidate = await candidateRepository.findById(candidateId)
+  const candidateNumber = candidate?.candidate_number || candidateId
+
+  if (!candidateNumber) {
+    throw new Error('candidate_number tidak ditemukan untuk candidate_id ini')
+  }
+
+  const config = getConfig()
+  const folderPath = posix.join(config.uploadDir, String(candidateNumber), 'on_board_documents')
+  console.log('Nextcloud on board document upload target', {
+    folderPath,
+    candidateId,
+    candidateNumber,
+    fieldName,
+    originalname: file.originalname,
+    mimetype: file.mimetype
+  })
+  await ensureFolderExists(folderPath)
+
+  const filename = sanitizeFileName(file.originalname || `${fieldName}`)
+  const targetPath = posix.join(folderPath, filename)
+  console.log('Nextcloud on board document upload path', targetPath)
+  await uploadToWebdav(targetPath, file.buffer, file.mimetype)
+
+  try {
+    const shareUrl = await createShareLink(targetPath)
+    return {
+      url: shareUrl || makeUrl(config.webdavPath, targetPath),
+      path: targetPath
+    }
+  } catch (error) {
+    console.error('Nextcloud share fallback used for', targetPath, error?.message)
+    return {
+      url: makeUrl(config.webdavPath, targetPath),
+      path: targetPath
+    }
+  }
+}
+
 module.exports = {
   getConfig,
   uploadCandidateFile,
   uploadBackgroundCheckFile,
+  uploadOnBoardDocumentFile,
   deleteFromWebdav
 }
