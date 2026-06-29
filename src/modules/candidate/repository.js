@@ -78,6 +78,14 @@ const normalizeFilterValue = (value) => {
   return value
 }
 
+const applyReferenceJoins = (query) => {
+  return query
+    .leftJoin('gate_sso_groups', 'gate_sso_groups.group_id', 'candidates.group_id')
+    .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
+    .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
+    .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+}
+
 const findAll = async (params = {}) => {
   const queryParams = parseStandardQuery(
     { body: params },
@@ -99,12 +107,7 @@ const findAll = async (params = {}) => {
     delete queryParams.filters.assign_role
   }
 
-  const baseQuery = pgCore(TABLE_NAME)
-    .select(SELECT_COLUMNS)
-    .leftJoin('gate_sso_groups', 'gate_sso_groups.group_id', 'candidates.group_id')
-    .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
-    .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
-    .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+  const baseQuery = applyReferenceJoins(pgCore(TABLE_NAME).select(SELECT_COLUMNS))
     .where({ 'candidates.deleted_at': null })
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
 
@@ -115,12 +118,7 @@ const findAll = async (params = {}) => {
 
   const data = await query
   let totalQuery = buildCountQuery(
-    pgCore(TABLE_NAME)
-      .leftJoin('gate_sso_groups', 'gate_sso_groups.group_id', 'candidates.group_id')
-      .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
-      .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
-      .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
-      .where({ 'candidates.deleted_at': null }),
+    applyReferenceJoins(pgCore(TABLE_NAME)).where({ 'candidates.deleted_at': null }),
     queryParams
   )
     .count('candidates.candidate_id as count')
@@ -137,9 +135,8 @@ const findAll = async (params = {}) => {
 }
 
 const findById = async (id) => {
-  return await pgCore(TABLE_NAME)
-    .select(SELECT_COLUMNS)
-    .where({ candidate_id: id, deleted_at: null })
+  return await applyReferenceJoins(pgCore(TABLE_NAME).select(SELECT_COLUMNS))
+    .where({ candidate_id: id, 'candidates.deleted_at': null })
     .first()
 }
 
@@ -151,7 +148,7 @@ const create = async (data) => {
     is_delete: false
   }
 
-  const [result] = await pgCore(TABLE_NAME).insert(payload).returning(SELECT_COLUMNS)
+  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME).insert(payload)).returning(SELECT_COLUMNS)
   return result
 }
 
@@ -161,7 +158,7 @@ const update = async (id, data) => {
     updated_at: pgCore.fn.now()
   }
 
-  const [result] = await pgCore(TABLE_NAME)
+  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME))
     .where({ candidate_id: id, deleted_at: null })
     .update(payload)
     .returning(SELECT_COLUMNS)
@@ -169,7 +166,7 @@ const update = async (id, data) => {
 }
 
 const remove = async (id, deletedBy) => {
-  const [result] = await pgCore(TABLE_NAME)
+  const [result] = await applyReferenceJoins(pgCore(TABLE_NAME))
     .where({ candidate_id: id, deleted_at: null })
     .update({
       deleted_at: pgCore.fn.now(),
