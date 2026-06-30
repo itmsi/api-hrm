@@ -22,6 +22,7 @@ const getById = async (req, res) => {
 
 const create = async (req, res) => {
   try {
+    console.log('---------------------------req', req)
     const data = await service.createBackgroundCheck(req.body, req.files, req.user)
     return successResponse(res, data, 'Data background check berhasil dibuat', 201)
   } catch (error) {

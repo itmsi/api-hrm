@@ -20,7 +20,9 @@ const SELECT_COLUMNS = [
   'updated_by',
   'deleted_at',
   'deleted_by',
-  'is_delete'
+  'is_delete',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const DETAIL_SELECT_COLUMNS = [
   'detail_interview_id',
@@ -35,7 +37,9 @@ const DETAIL_SELECT_COLUMNS = [
   'updated_by',
   'deleted_at',
   'deleted_by',
-  'is_delete'
+  'is_delete',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const ALLOWED_SORT_COLUMNS = ['created_at', 'company_value', 'comment']
 const SEARCHABLE_COLUMNS = ['company_value', 'comment']
@@ -96,6 +100,8 @@ const withDetails = async (interview, trx = pgCore) => {
   if (!interview) return null
   const detailRows = await trx(DETAIL_TABLE_NAME)
     .select(DETAIL_SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${DETAIL_TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${DETAIL_TABLE_NAME}.updated_by`)
     .where({ interview_id: interview.interview_id, deleted_at: null })
 
   return {
@@ -122,6 +128,8 @@ const findAll = async (params = {}) => {
 
   const baseQuery = pgCore(TABLE_NAME)
     .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ deleted_at: null })
 
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
@@ -146,6 +154,8 @@ const findAll = async (params = {}) => {
 const findById = async (id) => {
   const interview = await pgCore(TABLE_NAME)
     .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ interview_id: id, deleted_at: null })
     .first()
 
@@ -157,14 +167,14 @@ const create = async (data = {}, authorId) => {
 
   return await pgCore.transaction(async (trx) => {
     const payload = buildInterviewPayload({ ...interviewData }, authorId, trx)
-    const [result] = await trx(TABLE_NAME).insert(payload).returning(SELECT_COLUMNS)
+    const [inserted] = await trx(TABLE_NAME).insert(payload).returning('interview_id')
 
     if (Array.isArray(detail_interviews) && detail_interviews.length > 0) {
-      const detailPayloads = detail_interviews.map((detail) => buildDetailInterviewPayload(detail, authorId, result.interview_id, trx))
+      const detailPayloads = detail_interviews.map((detail) => buildDetailInterviewPayload(detail, authorId, inserted.interview_id, trx))
       await trx(DETAIL_TABLE_NAME).insert(detailPayloads)
     }
 
-    return await withDetails(result, trx)
+    return await withDetails({ interview_id: inserted.interview_id }, trx)
   })
 }
 
@@ -177,10 +187,14 @@ const update = async (id, data = {}, authorId) => {
       updated_at: trx.fn.now()
     }
 
-    const [result] = await trx(TABLE_NAME)
+    const [updated] = await trx(TABLE_NAME)
       .where({ interview_id: id, deleted_at: null })
       .update(payload)
-      .returning(SELECT_COLUMNS)
+      .returning('interview_id')
+
+    if (!updated?.interview_id) {
+      return null
+    }
 
     if (Array.isArray(detail_interviews)) {
       await trx(DETAIL_TABLE_NAME)
@@ -198,7 +212,7 @@ const update = async (id, data = {}, authorId) => {
       }
     }
 
-    return await withDetails(result, trx)
+    return await withDetails({ interview_id: updated.interview_id }, trx)
   })
 }
 
@@ -213,7 +227,7 @@ const remove = async (id, deletedBy) => {
         is_delete: true
       })
 
-    const [result] = await trx(TABLE_NAME)
+    const [updated] = await trx(TABLE_NAME)
       .where({ interview_id: id, deleted_at: null })
       .update({
         deleted_at: trx.fn.now(),
@@ -221,9 +235,13 @@ const remove = async (id, deletedBy) => {
         updated_at: trx.fn.now(),
         is_delete: true
       })
-      .returning(SELECT_COLUMNS)
+      .returning('interview_id')
 
-    return result
+    if (!updated?.interview_id) {
+      return null
+    }
+
+    return await withDetails({ interview_id: updated.interview_id }, trx)
   })
 }
 

@@ -20,7 +20,9 @@ const SELECT_COLUMNS = [
   'updated_by',
   'deleted_at',
   'deleted_by',
-  'is_delete'
+  'is_delete',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const ALLOWED_SORT_COLUMNS = ['created_at', 'schedule_interview_date', 'schedule_interview_time']
 const SEARCHABLE_COLUMNS = ['schedule_interview_duration']
@@ -50,7 +52,12 @@ const findAll = async (params = {}) => {
     queryParams.filters[key] = normalizeFilterValue(queryParams.filters[key])
   })
 
-  const baseQuery = pgCore(TABLE_NAME).select(SELECT_COLUMNS).where({ deleted_at: null })
+  const baseQuery = pgCore(TABLE_NAME)
+    .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
+    .where({ deleted_at: null })
+
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
   const data = await filteredQuery
 
@@ -70,6 +77,8 @@ const findAll = async (params = {}) => {
 const findById = async (id) => {
   return await pgCore(TABLE_NAME)
     .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ schedule_interview_id: id, deleted_at: null })
     .first()
 }
@@ -82,8 +91,8 @@ const create = async (data) => {
     is_delete: false
   }
 
-  const [result] = await pgCore(TABLE_NAME).insert(payload).returning(SELECT_COLUMNS)
-  return result
+  const [inserted] = await pgCore(TABLE_NAME).insert(payload).returning('schedule_interview_id')
+  return await findById(inserted.schedule_interview_id)
 }
 
 const update = async (id, data) => {
@@ -92,15 +101,17 @@ const update = async (id, data) => {
     updated_at: pgCore.fn.now()
   }
 
-  const [result] = await pgCore(TABLE_NAME)
+  const [updated] = await pgCore(TABLE_NAME)
     .where({ schedule_interview_id: id, deleted_at: null })
     .update(payload)
-    .returning(SELECT_COLUMNS)
-  return result
+    .returning('schedule_interview_id')
+
+  if (!updated?.schedule_interview_id) return null
+  return await findById(updated.schedule_interview_id)
 }
 
 const remove = async (id, deletedBy) => {
-  const [result] = await pgCore(TABLE_NAME)
+  const [updated] = await pgCore(TABLE_NAME)
     .where({ schedule_interview_id: id, deleted_at: null })
     .update({
       deleted_at: pgCore.fn.now(),
@@ -108,8 +119,16 @@ const remove = async (id, deletedBy) => {
       updated_at: pgCore.fn.now(),
       is_delete: true
     })
-    .returning(SELECT_COLUMNS)
-  return result
+    .returning('schedule_interview_id')
+
+  if (!updated?.schedule_interview_id) return null
+
+  return await pgCore(TABLE_NAME)
+    .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
+    .where({ schedule_interview_id: updated.schedule_interview_id })
+    .first()
 }
 
 module.exports = {

@@ -2,7 +2,7 @@ const repository = require('./repository')
 
 const getRequesterId = (user) => {
   if (!user) return null
-  return user.employee_id || user.user_id || user.sub || null
+  return user.employee_id || user.user_id || user.users_id || user.sub || null
 }
 
 const getInterviews = async (params) => {

@@ -66,7 +66,9 @@ const SELECT_COLUMNS = [
   'gate_sso_groups.group_name',
   'gate_sso_companies.company_name',
   'gate_sso_departments.department_name',
-  'gate_sso_titles.title_name'
+  'gate_sso_titles.title_name',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const ALLOWED_SORT_COLUMNS = [
   'candidates.created_at',
@@ -103,6 +105,8 @@ const applyReferenceJoins = (query) => {
     .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
     .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
     .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', 'candidates.created_by')
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', 'candidates.updated_by')
 }
 
 const createSelectQuery = () => {
