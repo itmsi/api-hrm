@@ -1,7 +1,7 @@
 const info = {
   description: 'Express.js API Boilerplate - Template untuk pengembangan REST API dengan fitur lengkap',
   version: '1.0.0',
-  title: 'Express.js API HRM Documentation',
+  title: 'Express.js API HRM Documentation tedt edit',
   contact: {
     email: 'your-email@example.com'
   },
