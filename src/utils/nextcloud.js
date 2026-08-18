@@ -124,6 +124,13 @@ const createShareLink = async (targetPath) => {
   }
 }
 
+const toDirectDownloadUrl = (shareUrl) => {
+  if (!shareUrl || typeof shareUrl !== 'string') return shareUrl
+  const trimmed = shareUrl.trim()
+  if (!/\/s\/[^/]+$/.test(trimmed)) return trimmed
+  return `${trimmed}/download`
+}
+
 const deleteFromWebdav = async (targetPath) => {
   ensureNextcloudConfig()
   const config = getConfig()
@@ -269,5 +276,6 @@ module.exports = {
   uploadCandidateFile,
   uploadBackgroundCheckFile,
   uploadOnBoardDocumentFile,
-  deleteFromWebdav
+  deleteFromWebdav,
+  toDirectDownloadUrl
 }

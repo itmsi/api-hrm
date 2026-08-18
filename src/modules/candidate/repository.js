@@ -53,6 +53,7 @@ const SELECT_COLUMNS = [
   'candidates.offering_letter',
   'candidates.remark',
   'candidates.schedule_interview',
+  'candidates.candidate_growth_analysis',
   'candidates.group_id',
   'candidates.candidate_status',
   'candidates.candidate_status_offering_letter',

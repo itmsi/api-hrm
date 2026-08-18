@@ -1,5 +1,7 @@
 const repository = require('./repository')
-const { uploadCandidateFile, deleteFromWebdav } = require('../../utils/nextcloud')
+const { uploadCandidateFile, deleteFromWebdav, toDirectDownloadUrl } = require('../../utils/nextcloud')
+const { analyzeCandidateResume } = require('../../utils/candidateAnalysis')
+const { processCandidateInterview } = require('../../utils/candidateInterviewOrchestration')
 
 const getRequesterId = (user) => {
   if (!user) return null
@@ -93,6 +95,22 @@ const calculateOfferingLetterStatus = (offeringLetterValue, ptkDateValue) => {
   const diffInDays = Math.abs(Math.floor((start - end) / (1000 * 60 * 60 * 24)))
 
   return diffInDays <= 30 ? 'OK' : 'NOT OK'
+}
+
+const analyzeResumeSafely = async (resumeUrl) => {
+  try {
+    return await analyzeCandidateResume(resumeUrl)
+  } catch (error) {
+    return null
+  }
+}
+
+const processCandidateInterviewSafely = async (candidateId, analysis, user) => {
+  try {
+    await processCandidateInterview(candidateId, analysis, user)
+  } catch (error) {
+    console.error('Candidate interview orchestration failed for', candidateId, error?.message)
+  }
 }
 
 const buildCandidateNumberLabel = (value) => {
@@ -219,13 +237,20 @@ const createCandidate = async (candidateData, files, user) => {
     if (uploadedResume) {
       updatedPayload.candidate_resume = uploadedResume.url
       updatedPayload.candidate_resume_path = uploadedResume.path
+      updatedPayload.candidate_growth_analysis = await analyzeResumeSafely(toDirectDownloadUrl(uploadedResume.url))
     }
   }
 
-  return await repository.update(createdCandidate.candidate_id, {
+  const finalCandidate = await repository.update(createdCandidate.candidate_id, {
     ...updatedPayload,
     updated_by: authorId
   })
+
+  if (updatedPayload.candidate_growth_analysis) {
+    await processCandidateInterviewSafely(createdCandidate.candidate_id, updatedPayload.candidate_growth_analysis, user)
+  }
+
+  return finalCandidate
 }
 
 const updateCandidate = async (id, candidateData, files, user) => {
@@ -267,13 +292,20 @@ const updateCandidate = async (id, candidateData, files, user) => {
     if (uploadedResume) {
       updatedPayload.candidate_resume = uploadedResume.url
       updatedPayload.candidate_resume_path = uploadedResume.path
+      updatedPayload.candidate_growth_analysis = await analyzeResumeSafely(toDirectDownloadUrl(uploadedResume.url))
     }
   }
 
-  return await repository.update(id, {
+  const finalCandidate = await repository.update(id, {
     ...updatedPayload,
     updated_by: authorId
   })
+
+  if (updatedPayload.candidate_growth_analysis) {
+    await processCandidateInterviewSafely(id, updatedPayload.candidate_growth_analysis, user)
+  }
+
+  return finalCandidate
 }
 
 const deleteCandidate = async (id, user) => {
