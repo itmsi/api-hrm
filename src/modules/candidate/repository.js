@@ -143,13 +143,10 @@ const applyCandidateListFilters = (baseQuery, queryParams, assignRoleFilter) => 
   let query = baseQuery
 
   if (queryParams.search.searchTerm && queryParams.search.searchableColumns.length > 0) {
+    const searchPattern = `%${queryParams.search.searchTerm}%`
     query = query.where(function () {
-      queryParams.search.searchableColumns.forEach((column, index) => {
-        if (index === 0) {
-          this.where(column, 'ilike', `%${queryParams.search.searchTerm}%`)
-        } else {
-          this.orWhere(column, 'ilike', `%${queryParams.search.searchTerm}%`)
-        }
+      queryParams.search.searchableColumns.forEach((column) => {
+        this.orWhereRaw(`??::text ilike ?`, [column, searchPattern])
       })
     })
   }
