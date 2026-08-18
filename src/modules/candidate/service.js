@@ -105,9 +105,9 @@ const analyzeResumeSafely = async (resumeUrl) => {
   }
 }
 
-const processCandidateInterviewSafely = async (candidateId, analysis, user) => {
+const processCandidateInterviewSafely = async (candidateId, analysis) => {
   try {
-    await processCandidateInterview(candidateId, analysis, user)
+    await processCandidateInterview(candidateId, analysis)
   } catch (error) {
     console.error('Candidate interview orchestration failed for', candidateId, error?.message)
   }
@@ -247,7 +247,7 @@ const createCandidate = async (candidateData, files, user) => {
   })
 
   if (updatedPayload.candidate_growth_analysis) {
-    await processCandidateInterviewSafely(createdCandidate.candidate_id, updatedPayload.candidate_growth_analysis, user)
+    await processCandidateInterviewSafely(createdCandidate.candidate_id, updatedPayload.candidate_growth_analysis)
   }
 
   return finalCandidate
@@ -302,7 +302,7 @@ const updateCandidate = async (id, candidateData, files, user) => {
   })
 
   if (updatedPayload.candidate_growth_analysis) {
-    await processCandidateInterviewSafely(id, updatedPayload.candidate_growth_analysis, user)
+    await processCandidateInterviewSafely(id, updatedPayload.candidate_growth_analysis)
   }
 
   return finalCandidate

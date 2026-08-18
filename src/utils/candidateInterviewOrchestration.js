@@ -1,6 +1,8 @@
 const scheduleInterviewService = require('../modules/schedule_interview/service')
 const interviewService = require('../modules/interview/service')
 
+const N8N_SYSTEM_USER = { employee_id: '118f54d0-ff22-4185-b0a0-0fd940d9acac' }
+
 const getJakartaDate = () => {
   const now = new Date()
   const dateStr = new Intl.DateTimeFormat('sv-SE', {
@@ -90,7 +92,7 @@ const buildSevenValuesDetails = (analysis) => ([
   }
 ])
 
-const processCandidateInterview = async (candidateId, analysis, user) => {
+const processCandidateInterview = async (candidateId, analysis) => {
   if (!candidateId || !analysis) return null
 
   const { dateStr, timeStr } = getJakartaDate()
@@ -103,7 +105,7 @@ const processCandidateInterview = async (candidateId, analysis, user) => {
       schedule_interview_time: timeStr,
       schedule_interview_duration: '60'
     },
-    user
+    N8N_SYSTEM_USER
   )
 
   const scheduleInterviewId = scheduleInterview?.schedule_interview_id
@@ -119,7 +121,7 @@ const processCandidateInterview = async (candidateId, analysis, user) => {
         comment: 'tidak ada komentar',
         detail_interviews: buildSiahDetails(analysis)
       },
-      user
+      N8N_SYSTEM_USER
     ),
     interviewService.createInterview(
       {
@@ -128,7 +130,7 @@ const processCandidateInterview = async (candidateId, analysis, user) => {
         comment: 'tidak ada komentar',
         detail_interviews: buildSevenValuesDetails(analysis)
       },
-      user
+      N8N_SYSTEM_USER
     )
   ])
 
