@@ -19,6 +19,15 @@ const getInterviewById = async (id) => {
 
 const createInterview = async (payload, user) => {
   const authorId = getRequesterId(user)
+  const existing = await repository.findByScheduleAndCompanyValue(
+    payload?.schedule_interview_id,
+    payload?.company_value
+  )
+
+  if (existing) {
+    return await repository.update(existing.interview_id, payload, authorId)
+  }
+
   return await repository.create(payload, authorId)
 }
 

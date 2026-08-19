@@ -8,6 +8,24 @@ const {
 
 const TABLE_NAME = 'interviews'
 const DETAIL_TABLE_NAME = 'detail_interviews'
+const SCHEDULE_TABLE_NAME = 'schedule_interviews'
+const SCHEDULE_SELECT_COLUMNS = [
+  'schedule_interview_id',
+  'candidate_id',
+  'assign_role',
+  'schedule_interview_date',
+  'schedule_interview_time',
+  'schedule_interview_duration',
+  'created_at',
+  'created_by',
+  'updated_at',
+  'updated_by',
+  'deleted_at',
+  'deleted_by',
+  'is_delete',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
+]
 const SELECT_COLUMNS = [
   'interview_id',
   'schedule_interview_id',
@@ -41,9 +59,9 @@ const DETAIL_SELECT_COLUMNS = [
   'created_employee.employee_name as created_by_name',
   'updated_employee.employee_name as updated_by_name'
 ]
-const ALLOWED_SORT_COLUMNS = ['created_at', 'company_value', 'comment']
-const SEARCHABLE_COLUMNS = ['company_value', 'comment']
-const ALLOWED_FILTER_COLUMNS = ['schedule_interview_id']
+const ALLOWED_SORT_COLUMNS = ['created_at', 'schedule_interview_date', 'schedule_interview_time']
+const SEARCHABLE_COLUMNS = ['schedule_interview_duration']
+const ALLOWED_FILTER_COLUMNS = ['schedule_interview_id', 'candidate_id']
 
 const normalizeFilterValue = (value) => {
   if (value === undefined || value === null) return undefined
@@ -110,27 +128,16 @@ const withDetails = async (interview, trx = pgCore) => {
   }
 }
 
-const groupByScheduleInterview = (rows) => {
-  const groups = []
-  const groupIndexByScheduleId = new Map()
+const findInterviewsBySchedule = async (scheduleInterviewId) => {
+  const interviews = await pgCore(TABLE_NAME)
+    .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
+    .where({ schedule_interview_id: scheduleInterviewId, deleted_at: null })
 
-  rows.forEach(({ interview_id, detail_interviews, ...scheduleFields }) => {
-    const scheduleInterviewId = scheduleFields.schedule_interview_id
-    let groupIndex = groupIndexByScheduleId.get(scheduleInterviewId)
-
-    if (groupIndex === undefined) {
-      groupIndex = groups.length
-      groupIndexByScheduleId.set(scheduleInterviewId, groupIndex)
-      groups.push({
-        ...scheduleFields,
-        data_interviews: []
-      })
-    }
-
-    groups[groupIndex].data_interviews.push({ interview_id, detail_interviews })
-  })
-
-  return groups
+  return await Promise.all(
+    (Array.isArray(interviews) ? interviews : []).map((interview) => withDetails(interview))
+  )
 }
 
 const findAll = async (params = {}) => {
@@ -149,30 +156,43 @@ const findAll = async (params = {}) => {
     queryParams.filters[key] = normalizeFilterValue(queryParams.filters[key])
   })
 
-  const baseQuery = pgCore(TABLE_NAME)
-    .select(SELECT_COLUMNS)
-    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
-    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
+  const baseQuery = pgCore(SCHEDULE_TABLE_NAME)
+    .select(SCHEDULE_SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${SCHEDULE_TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${SCHEDULE_TABLE_NAME}.updated_by`)
     .where({ deleted_at: null })
 
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
-  const data = await filteredQuery
-  const dataWithDetails = await Promise.all(
-    (Array.isArray(data) ? data : []).map((item) => withDetails(item))
+  const schedules = await filteredQuery
+  const groupedData = await Promise.all(
+    (Array.isArray(schedules) ? schedules : []).map(async (schedule) => ({
+      ...schedule,
+      data_interviews: await findInterviewsBySchedule(schedule.schedule_interview_id)
+    }))
   )
-  const groupedData = groupByScheduleInterview(dataWithDetails)
 
   let totalQuery = buildCountQuery(
-    pgCore(TABLE_NAME).where({ deleted_at: null }),
+    pgCore(SCHEDULE_TABLE_NAME).where({ deleted_at: null }),
     queryParams
   )
-    .count('interview_id as count')
+    .count('schedule_interview_id as count')
     .first()
 
   const totalResult = await totalQuery
   const total = parseInt(totalResult?.count || 0, 10)
 
   return formatSimplePaginatedResponse(groupedData, queryParams.pagination, total)
+}
+
+const findByScheduleAndCompanyValue = async (scheduleInterviewId, companyValue) => {
+  return await pgCore(TABLE_NAME)
+    .select('interview_id')
+    .where({
+      schedule_interview_id: scheduleInterviewId,
+      company_value: companyValue,
+      deleted_at: null
+    })
+    .first()
 }
 
 const findById = async (id) => {
@@ -272,6 +292,7 @@ const remove = async (id, deletedBy) => {
 module.exports = {
   findAll,
   findById,
+  findByScheduleAndCompanyValue,
   create,
   update,
   remove
