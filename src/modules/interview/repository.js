@@ -110,6 +110,29 @@ const withDetails = async (interview, trx = pgCore) => {
   }
 }
 
+const groupByScheduleInterview = (rows) => {
+  const groups = []
+  const groupIndexByScheduleId = new Map()
+
+  rows.forEach(({ interview_id, detail_interviews, ...scheduleFields }) => {
+    const scheduleInterviewId = scheduleFields.schedule_interview_id
+    let groupIndex = groupIndexByScheduleId.get(scheduleInterviewId)
+
+    if (groupIndex === undefined) {
+      groupIndex = groups.length
+      groupIndexByScheduleId.set(scheduleInterviewId, groupIndex)
+      groups.push({
+        ...scheduleFields,
+        data_interviews: []
+      })
+    }
+
+    groups[groupIndex].data_interviews.push({ interview_id, detail_interviews })
+  })
+
+  return groups
+}
+
 const findAll = async (params = {}) => {
   const queryParams = parseStandardQuery(
     { body: params },
@@ -137,6 +160,7 @@ const findAll = async (params = {}) => {
   const dataWithDetails = await Promise.all(
     (Array.isArray(data) ? data : []).map((item) => withDetails(item))
   )
+  const groupedData = groupByScheduleInterview(dataWithDetails)
 
   let totalQuery = buildCountQuery(
     pgCore(TABLE_NAME).where({ deleted_at: null }),
@@ -148,7 +172,7 @@ const findAll = async (params = {}) => {
   const totalResult = await totalQuery
   const total = parseInt(totalResult?.count || 0, 10)
 
-  return formatSimplePaginatedResponse(dataWithDetails, queryParams.pagination, total)
+  return formatSimplePaginatedResponse(groupedData, queryParams.pagination, total)
 }
 
 const findById = async (id) => {
