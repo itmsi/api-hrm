@@ -53,6 +53,7 @@ const SELECT_COLUMNS = [
   'candidates.offering_letter',
   'candidates.remark',
   'candidates.schedule_interview',
+  'candidates.candidate_growth_analysis',
   'candidates.group_id',
   'candidates.candidate_status',
   'candidates.candidate_status_offering_letter',
@@ -66,7 +67,9 @@ const SELECT_COLUMNS = [
   'gate_sso_groups.group_name',
   'gate_sso_companies.company_name',
   'gate_sso_departments.department_name',
-  'gate_sso_titles.title_name'
+  'gate_sso_titles.title_name',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const ALLOWED_SORT_COLUMNS = [
   'candidates.created_at',
@@ -103,6 +106,8 @@ const applyReferenceJoins = (query) => {
     .leftJoin('gate_sso_companies', 'gate_sso_companies.company_id', 'candidates.company_id')
     .leftJoin('gate_sso_departments', 'gate_sso_departments.department_id', 'candidates.department_id')
     .leftJoin('gate_sso_titles', 'gate_sso_titles.title_id', 'candidates.title_id')
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', 'candidates.created_by')
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', 'candidates.updated_by')
 }
 
 const createSelectQuery = () => {
@@ -139,13 +144,10 @@ const applyCandidateListFilters = (baseQuery, queryParams, assignRoleFilter) => 
   let query = baseQuery
 
   if (queryParams.search.searchTerm && queryParams.search.searchableColumns.length > 0) {
+    const searchPattern = `%${queryParams.search.searchTerm}%`
     query = query.where(function () {
-      queryParams.search.searchableColumns.forEach((column, index) => {
-        if (index === 0) {
-          this.where(column, 'ilike', `%${queryParams.search.searchTerm}%`)
-        } else {
-          this.orWhere(column, 'ilike', `%${queryParams.search.searchTerm}%`)
-        }
+      queryParams.search.searchableColumns.forEach((column) => {
+        this.orWhereRaw(`??::text ilike ?`, [column, searchPattern])
       })
     })
   }

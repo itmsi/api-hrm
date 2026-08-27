@@ -17,7 +17,9 @@ const SELECT_COLUMNS = [
   'updated_by',
   'deleted_at',
   'deleted_by',
-  'is_delete'
+  'is_delete',
+  'created_employee.employee_name as created_by_name',
+  'updated_employee.employee_name as updated_by_name'
 ]
 const ALLOWED_SORT_COLUMNS = ['created_at']
 const SEARCHABLE_COLUMNS = ['notes']
@@ -57,6 +59,8 @@ const findAll = async (params = {}) => {
 
   const baseQuery = pgCore(TABLE_NAME)
     .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ deleted_at: null })
 
   const filteredQuery = applyStandardFilters(baseQuery, queryParams)
@@ -78,6 +82,8 @@ const findAll = async (params = {}) => {
 const findById = async (id) => {
   return await pgCore(TABLE_NAME)
     .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ note_id: id, deleted_at: null })
     .first()
 }
@@ -93,8 +99,8 @@ const create = async (data = {}) => {
     is_delete: false
   }
 
-  const [result] = await pgCore(TABLE_NAME).insert(payload).returning(SELECT_COLUMNS)
-  return result
+  const [inserted] = await pgCore(TABLE_NAME).insert(payload).returning('note_id')
+  return await findById(inserted.note_id)
 }
 
 const update = async (id, data = {}) => {
@@ -105,16 +111,17 @@ const update = async (id, data = {}) => {
     updated_at: pgCore.fn.now()
   }
 
-  const [result] = await pgCore(TABLE_NAME)
+  const [updated] = await pgCore(TABLE_NAME)
     .where({ note_id: id, deleted_at: null })
     .update(payload)
-    .returning(SELECT_COLUMNS)
+    .returning('note_id')
 
-  return result
+  if (!updated?.note_id) return null
+  return await findById(updated.note_id)
 }
 
 const remove = async (id, deletedBy) => {
-  const [result] = await pgCore(TABLE_NAME)
+  const [updated] = await pgCore(TABLE_NAME)
     .where({ note_id: id, deleted_at: null })
     .update({
       deleted_at: pgCore.fn.now(),
@@ -122,9 +129,16 @@ const remove = async (id, deletedBy) => {
       updated_at: pgCore.fn.now(),
       is_delete: true
     })
-    .returning(SELECT_COLUMNS)
+    .returning('note_id')
 
-  return result
+  if (!updated?.note_id) return null
+
+  return await pgCore(TABLE_NAME)
+    .select(SELECT_COLUMNS)
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
+    .where({ note_id: updated.note_id })
+    .first()
 }
 
 module.exports = {

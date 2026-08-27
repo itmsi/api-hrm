@@ -16,7 +16,9 @@ const findAll = async (page = 1, limit = 10) => {
   const offset = (page - 1) * limit;
   
   const data = await db(TABLE_NAME)
-    .select('*')
+    .select('*', 'created_employee.employee_name as created_by_name', 'updated_employee.employee_name as updated_by_name')
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ deleted_at: null })
     .orderBy('created_at', 'desc')
     .limit(limit)
@@ -43,6 +45,9 @@ const findAll = async (page = 1, limit = 10) => {
  */
 const findById = async (id) => {
   return await db(TABLE_NAME)
+    .select('*', 'created_employee.employee_name as created_by_name', 'updated_employee.employee_name as updated_by_name')
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ id, deleted_at: null })
     .first();
 };
@@ -52,6 +57,9 @@ const findById = async (id) => {
  */
 const findOne = async (conditions) => {
   return await db(TABLE_NAME)
+    .select('*', 'created_employee.employee_name as created_by_name', 'updated_employee.employee_name as updated_by_name')
+    .leftJoin('gate_sso_employees as created_employee', 'created_employee.employee_id', `${TABLE_NAME}.created_by`)
+    .leftJoin('gate_sso_employees as updated_employee', 'updated_employee.employee_id', `${TABLE_NAME}.updated_by`)
     .where({ ...conditions, deleted_at: null })
     .first();
 };
