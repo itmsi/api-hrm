@@ -147,10 +147,30 @@ const remove = async (id, deletedBy) => {
     .first()
 }
 
+const findRawById = async (id) => {
+  return pgCore(TABLE_NAME).where({ on_board_documents_id: id }).first()
+}
+
+const insertRaw = async (payload) => {
+  const [inserted] = await pgCore(TABLE_NAME).insert(payload).returning('on_board_documents_id')
+  return inserted
+}
+
+const updateRaw = async (id, payload) => {
+  const [updated] = await pgCore(TABLE_NAME)
+    .where({ on_board_documents_id: id })
+    .update(payload)
+    .returning('on_board_documents_id')
+  return updated
+}
+
 module.exports = {
   findAll,
   findById,
   create,
   update,
-  remove
+  remove,
+  findRawById,
+  insertRaw,
+  updateRaw
 }
