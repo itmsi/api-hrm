@@ -1,6 +1,7 @@
 const repository = require('./repository')
 const { pgCore } = require('../../config/database')
 const candidateRepository = require('../candidate/repository')
+const { parseCsvBuffer, cleanCsvValue } = require('../../utils/csvImport')
 
 const getRequesterId = (user) => {
   if (!user) return null
@@ -134,10 +135,99 @@ const deleteScheduleInterview = async (id, user) => {
   return result
 }
 
+const resolveEmployeeId = async (employeeName, cache) => {
+  const name = cleanCsvValue(employeeName)
+  if (!name) return null
+  const cacheKey = name.toLowerCase()
+  if (cache.has(cacheKey)) return cache.get(cacheKey)
+
+  const employee = await repository.findEmployeeIdByName(name)
+  const employeeId = employee ? employee.employee_id : null
+
+  cache.set(cacheKey, employeeId)
+  return employeeId
+}
+
+const buildScheduleInterviewImportPayload = async (row, cache) => {
+  const scheduleInterviewId = cleanCsvValue(row.schedule_interview_id)
+  if (!scheduleInterviewId) {
+    throw new Error('schedule_interview_id wajib diisi')
+  }
+
+  const candidateId = cleanCsvValue(row.candidate_id)
+  if (!candidateId) {
+    throw new Error('candidate_id wajib diisi')
+  }
+
+  const assignRoleValue = cleanCsvValue(row.assign_role)
+  const deletedAt = cleanCsvValue(row.delete_at)
+
+  const [createdBy, updatedBy, deletedBy] = await Promise.all([
+    resolveEmployeeId(row.create_by, cache),
+    resolveEmployeeId(row.update_by, cache),
+    resolveEmployeeId(row.delete_by, cache)
+  ])
+
+  return {
+    schedule_interview_id: scheduleInterviewId,
+    candidate_id: candidateId,
+    assign_role: assignRoleValue ? { role: assignRoleValue } : null,
+    schedule_interview_date: cleanCsvValue(row.schedule_interview_date),
+    schedule_interview_time: cleanCsvValue(row.schedule_interview_time),
+    schedule_interview_duration: cleanCsvValue(row.schedule_interview_duration),
+    created_at: cleanCsvValue(row.create_at),
+    created_by: createdBy,
+    updated_at: cleanCsvValue(row.update_at),
+    updated_by: updatedBy,
+    deleted_at: deletedAt,
+    deleted_by: deletedBy,
+    is_delete: Boolean(deletedAt)
+  }
+}
+
+const importScheduleInterviewsFromCsv = async (fileBuffer) => {
+  if (!fileBuffer) {
+    throw { message: 'File CSV wajib diunggah', statusCode: 400 }
+  }
+
+  const rows = await parseCsvBuffer(fileBuffer)
+
+  if (rows.length === 0) {
+    throw { message: 'File CSV kosong atau format tidak sesuai', statusCode: 400 }
+  }
+
+  const employeeCache = new Map()
+  const summary = { total_rows: rows.length, created: 0, updated: 0, failed: 0, errors: [] }
+
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index]
+    const rowNumber = index + 2
+
+    try {
+      const payload = await buildScheduleInterviewImportPayload(row, employeeCache)
+      const existing = await repository.findRawById(payload.schedule_interview_id)
+
+      if (existing) {
+        await repository.updateRaw(payload.schedule_interview_id, payload)
+        summary.updated++
+      } else {
+        await repository.insertRaw(payload)
+        summary.created++
+      }
+    } catch (error) {
+      summary.failed++
+      summary.errors.push({ row: rowNumber, message: error.message || 'Gagal memproses baris' })
+    }
+  }
+
+  return summary
+}
+
 module.exports = {
   getScheduleInterviews,
   getScheduleInterviewById,
   createScheduleInterview,
   updateScheduleInterview,
-  deleteScheduleInterview
+  deleteScheduleInterview,
+  importScheduleInterviewsFromCsv
 }

@@ -1,10 +1,9 @@
 const { v4: uuidv4 } = require('uuid')
-const csvParser = require('csv-parser')
-const { Readable } = require('stream')
 const repository = require('./repository')
 const { uploadCandidateFile, deleteFromWebdav, toDirectDownloadUrl } = require('../../utils/nextcloud')
 const { analyzeCandidateResume } = require('../../utils/candidateAnalysis')
 const { processCandidateInterview } = require('../../utils/candidateInterviewOrchestration')
+const { parseCsvBuffer, cleanCsvValue, cleanCsvDigits } = require('../../utils/csvImport')
 
 const getRequesterId = (user) => {
   if (!user) return null
@@ -318,31 +317,6 @@ const deleteCandidate = async (id, user) => {
   }
   const authorId = getRequesterId(user)
   return await repository.remove(id, authorId)
-}
-
-const parseCsvBuffer = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const rows = []
-    Readable.from(buffer.toString('utf8'))
-      .pipe(csvParser())
-      .on('data', (row) => rows.push(row))
-      .on('end', () => resolve(rows))
-      .on('error', reject)
-  })
-}
-
-const cleanCsvValue = (value) => {
-  if (value === undefined || value === null) return null
-  const trimmed = String(value).trim()
-  if (trimmed === '' || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'nan') return null
-  return trimmed
-}
-
-const cleanCsvDigits = (value) => {
-  const cleaned = cleanCsvValue(value)
-  if (!cleaned) return null
-  const digits = cleaned.replace(/[^0-9]/g, '')
-  return digits === '' ? null : parseInt(digits, 10)
 }
 
 const resolveCompanyId = async (companyName, authorId, cache) => {
