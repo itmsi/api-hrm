@@ -61,11 +61,21 @@ const importCsv = async (req, res) => {
   }
 }
 
+const backfillScheduleInterview = async (req, res) => {
+  try {
+    const data = await service.backfillCandidateScheduleInterview()
+    return successResponse(res, data, 'Backfill data schedule_interview kandidat selesai diproses')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
 module.exports = {
   getList,
   getById,
   create,
   update,
   remove,
-  importCsv
+  importCsv,
+  backfillScheduleInterview
 }

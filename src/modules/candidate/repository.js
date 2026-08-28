@@ -376,12 +376,29 @@ const createTitle = async ({ titleId, titleName, departmentId, authorId }) => {
   return titleId
 }
 
+const findCandidatesMissingScheduleInterview = async () => {
+  return createBaseQuery()
+    .select('candidate_id')
+    .where({ deleted_at: null })
+    .andWhere(function () {
+      this.whereNull('schedule_interview').orWhereRaw("schedule_interview::text = '{}'::text")
+    })
+}
+
+const updateScheduleInterviewJson = async (candidateId, scheduleInterviewJson) => {
+  return createBaseQuery()
+    .where({ candidate_id: candidateId, deleted_at: null })
+    .update({ schedule_interview: scheduleInterviewJson, updated_at: pgCore.fn.now() })
+}
+
 module.exports = {
   findAll,
   findById,
   create,
   update,
   remove,
+  findCandidatesMissingScheduleInterview,
+  updateScheduleInterviewJson,
   findCompanyByName,
   createCompany,
   findDepartmentByNameAndCompany,

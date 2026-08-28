@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid')
 const repository = require('./repository')
+const scheduleInterviewRepository = require('../schedule_interview/repository')
 const { uploadCandidateFile, deleteFromWebdav, toDirectDownloadUrl } = require('../../utils/nextcloud')
 const { analyzeCandidateResume } = require('../../utils/candidateAnalysis')
 const { processCandidateInterview } = require('../../utils/candidateInterviewOrchestration')
@@ -442,11 +443,52 @@ const importCandidatesFromCsv = async (fileBuffer, user) => {
   return summary
 }
 
+const resolveAssignRoleLabel = (assignRole) => {
+  if (!assignRole) return null
+  if (typeof assignRole === 'string') return assignRole
+  if (typeof assignRole === 'object') {
+    if (typeof assignRole.role === 'string') return assignRole.role
+    if (typeof assignRole.value === 'string') return assignRole.value
+  }
+  return null
+}
+
+const backfillCandidateScheduleInterview = async () => {
+  const candidates = await repository.findCandidatesMissingScheduleInterview()
+  const summary = { total_checked: candidates.length, updated: 0, skipped: 0, errors: [] }
+
+  for (const candidate of candidates) {
+    try {
+      const latestSchedule = await scheduleInterviewRepository.findLatestByCandidateId(candidate.candidate_id)
+
+      if (!latestSchedule) {
+        summary.skipped++
+        continue
+      }
+
+      const scheduleInterviewJson = {
+        assign_role: resolveAssignRoleLabel(latestSchedule.assign_role),
+        schedule_interview_date: normalizeDateOnlyValue(latestSchedule.schedule_interview_date),
+        schedule_interview_time: latestSchedule.schedule_interview_time,
+        schedule_interview_duration: latestSchedule.schedule_interview_duration
+      }
+
+      await repository.updateScheduleInterviewJson(candidate.candidate_id, scheduleInterviewJson)
+      summary.updated++
+    } catch (error) {
+      summary.errors.push({ candidate_id: candidate.candidate_id, message: error.message || 'Gagal memproses data' })
+    }
+  }
+
+  return summary
+}
+
 module.exports = {
   getCandidates,
   getCandidateById,
   createCandidate,
   updateCandidate,
   deleteCandidate,
-  importCandidatesFromCsv
+  importCandidatesFromCsv,
+  backfillCandidateScheduleInterview
 }

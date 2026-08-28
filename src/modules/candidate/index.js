@@ -52,6 +52,17 @@ router.post(
 )
 
 /**
+ * @route   POST /api/hrm/candidates/backfill-schedule-interview
+ * @desc    Backfill candidates.schedule_interview from the latest schedule_interviews row
+ * @access  Protected
+ */
+router.post(
+  '/backfill-schedule-interview',
+  verifyToken,
+  controller.backfillScheduleInterview
+)
+
+/**
  * @route   PUT /api/hrm/candidates/:id
  * @desc    Update candidate by ID
  * @access  Protected
