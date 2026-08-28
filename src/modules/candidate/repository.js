@@ -314,10 +314,78 @@ const remove = async (id, deletedBy) => {
   return formatCandidateRows(deletedRow)
 }
 
+const findCompanyByName = async (companyName) => {
+  return pgCore('gate_sso_companies')
+    .whereRaw('lower(company_name) = ?', [String(companyName).trim().toLowerCase()])
+    .andWhere({ deleted_at: null })
+    .first()
+}
+
+const createCompany = async ({ companyId, companyName, authorId }) => {
+  await pgCore('gate_sso_companies').insert({
+    company_id: companyId,
+    company_name: companyName,
+    created_at: pgCore.fn.now(),
+    updated_at: pgCore.fn.now(),
+    created_by: authorId,
+    updated_by: authorId,
+    is_delete: false
+  })
+  return companyId
+}
+
+const findDepartmentByNameAndCompany = async (departmentName, companyId) => {
+  return pgCore('gate_sso_departments')
+    .whereRaw('lower(department_name) = ?', [String(departmentName).trim().toLowerCase()])
+    .andWhere({ company_id: companyId, deleted_at: null })
+    .first()
+}
+
+const createDepartment = async ({ departmentId, departmentName, companyId, authorId }) => {
+  await pgCore('gate_sso_departments').insert({
+    department_id: departmentId,
+    department_name: departmentName,
+    company_id: companyId,
+    created_at: pgCore.fn.now(),
+    updated_at: pgCore.fn.now(),
+    created_by: authorId,
+    updated_by: authorId,
+    is_delete: false
+  })
+  return departmentId
+}
+
+const findTitleByNameAndDepartment = async (titleName, departmentId) => {
+  return pgCore('gate_sso_titles')
+    .whereRaw('lower(title_name) = ?', [String(titleName).trim().toLowerCase()])
+    .andWhere({ department_id: departmentId, deleted_at: null })
+    .first()
+}
+
+const createTitle = async ({ titleId, titleName, departmentId, authorId }) => {
+  await pgCore('gate_sso_titles').insert({
+    title_id: titleId,
+    title_name: titleName,
+    department_id: departmentId,
+    created_at: pgCore.fn.now(),
+    updated_at: pgCore.fn.now(),
+    created_by: authorId,
+    updated_by: authorId,
+    is_delete: false
+  })
+  return titleId
+}
+
 module.exports = {
   findAll,
   findById,
   create,
   update,
-  remove
+  remove,
+  findCompanyByName,
+  createCompany,
+  findDepartmentByNameAndCompany,
+  createDepartment,
+  findTitleByNameAndDepartment,
+  createTitle
 }

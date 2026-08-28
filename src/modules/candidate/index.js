@@ -10,7 +10,7 @@ const {
 } = require('./validation')
 const { verifyToken } = require('../../middlewares')
 const { validateMiddleware } = require('../../middlewares/validation')
-const { handleCandidateFileUpload } = require('../../middlewares/fileUpload')
+const { handleCandidateFileUpload, handleFileUpload } = require('../../middlewares/fileUpload')
 
 /**
  * @route   POST /api/hrm/candidates/get
@@ -38,6 +38,17 @@ router.post(
   createValidation,
   validateMiddleware,
   controller.create
+)
+
+/**
+ * @route   POST /api/hrm/candidates/import
+ * @desc    Import candidates from a CSV file
+ * @access  Public
+ */
+router.post(
+  '/import',
+  handleFileUpload,
+  controller.importCsv
 )
 
 /**
