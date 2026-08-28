@@ -61,11 +61,24 @@ const importCsv = async (req, res) => {
   }
 }
 
+const importDetailCsv = async (req, res) => {
+  try {
+    if (!req.file) {
+      return errorResponse(res, 'File CSV wajib diunggah', 400)
+    }
+    const data = await service.importDetailInterviewsFromCsv(req.file.buffer)
+    return successResponse(res, data, 'Import data detail interview selesai diproses')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
 module.exports = {
   getList,
   getById,
   create,
   update,
   remove,
-  importCsv
+  importCsv,
+  importDetailCsv
 }

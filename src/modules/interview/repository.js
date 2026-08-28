@@ -312,6 +312,23 @@ const findEmployeeIdByName = async (employeeName) => {
     .first()
 }
 
+const findRawDetailById = async (id) => {
+  return pgCore(DETAIL_TABLE_NAME).where({ detail_interview_id: id }).first()
+}
+
+const insertRawDetail = async (payload) => {
+  const [inserted] = await pgCore(DETAIL_TABLE_NAME).insert(payload).returning('detail_interview_id')
+  return inserted
+}
+
+const updateRawDetail = async (id, payload) => {
+  const [updated] = await pgCore(DETAIL_TABLE_NAME)
+    .where({ detail_interview_id: id })
+    .update(payload)
+    .returning('detail_interview_id')
+  return updated
+}
+
 module.exports = {
   findAll,
   findById,
@@ -322,5 +339,8 @@ module.exports = {
   findRawById,
   insertRaw,
   updateRaw,
-  findEmployeeIdByName
+  findEmployeeIdByName,
+  findRawDetailById,
+  insertRawDetail,
+  updateRawDetail
 }

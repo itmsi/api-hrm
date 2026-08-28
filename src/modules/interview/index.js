@@ -35,6 +35,12 @@ router.post(
   controller.importCsv
 )
 
+router.post(
+  '/detail-interviews/import',
+  handleFileUpload,
+  controller.importDetailCsv
+)
+
 router.put(
   '/:id',
   verifyToken,

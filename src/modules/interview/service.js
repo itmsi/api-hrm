@@ -136,11 +136,87 @@ const importInterviewsFromCsv = async (fileBuffer) => {
   return summary
 }
 
+const buildDetailInterviewImportPayload = async (row, cache) => {
+  const detailInterviewId = cleanCsvValue(row.detail_interview_id)
+  if (!detailInterviewId) {
+    throw new Error('detail_interview_id wajib diisi')
+  }
+
+  const interviewId = cleanCsvValue(row.interview_id)
+  if (!interviewId) {
+    throw new Error('interview_id wajib diisi')
+  }
+
+  const deletedAt = cleanCsvValue(row.delete_at)
+  const scoreValue = cleanCsvValue(row.score)
+
+  const [createdBy, updatedBy, deletedBy] = await Promise.all([
+    resolveEmployeeId(row.create_by, cache),
+    resolveEmployeeId(row.update_by, cache),
+    resolveEmployeeId(row.delete_by, cache)
+  ])
+
+  return {
+    detail_interview_id: detailInterviewId,
+    interview_id: interviewId,
+    aspect: cleanCsvValue(row.aspect),
+    question: cleanCsvValue(row.question),
+    answer: cleanCsvValue(row.answer),
+    score: scoreValue === null ? '0' : scoreValue,
+    created_at: cleanCsvValue(row.create_at),
+    created_by: createdBy,
+    updated_at: cleanCsvValue(row.update_at),
+    updated_by: updatedBy,
+    deleted_at: deletedAt,
+    deleted_by: deletedBy,
+    is_delete: Boolean(deletedAt)
+  }
+}
+
+const importDetailInterviewsFromCsv = async (fileBuffer) => {
+  if (!fileBuffer) {
+    throw { message: 'File CSV wajib diunggah', statusCode: 400 }
+  }
+
+  const rows = await parseCsvBuffer(fileBuffer)
+
+  if (rows.length === 0) {
+    throw { message: 'File CSV kosong atau format tidak sesuai', statusCode: 400 }
+  }
+
+  const employeeCache = new Map()
+  const summary = { total_rows: rows.length, created: 0, updated: 0, failed: 0, errors: [] }
+
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index]
+    const rowNumber = index + 2
+
+    try {
+      const payload = await buildDetailInterviewImportPayload(row, employeeCache)
+      const existing = await repository.findRawDetailById(payload.detail_interview_id)
+
+      if (existing) {
+        await repository.updateRawDetail(payload.detail_interview_id, payload)
+        summary.updated++
+      } else {
+        await repository.insertRawDetail(payload)
+        summary.created++
+      }
+    } catch (error) {
+      summary.failed++
+      summary.errors.push({ row: rowNumber, message: error.message || 'Gagal memproses baris' })
+    }
+  }
+
+  return summary
+}
+
 module.exports = {
   getInterviews,
   getInterviewById,
   createInterview,
   updateInterview,
   deleteInterview,
-  importInterviewsFromCsv
+  importInterviewsFromCsv,
+  importDetailInterviewsFromCsv
 }
