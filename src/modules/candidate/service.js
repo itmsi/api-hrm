@@ -453,21 +453,42 @@ const resolveAssignRoleLabel = (assignRole) => {
   return null
 }
 
+const combineAssignRoleLabels = (schedules) => {
+  const labels = []
+  const seen = new Set()
+
+  schedules.forEach((schedule) => {
+    const label = resolveAssignRoleLabel(schedule.assign_role)
+    if (!label) return
+    label.split(',').forEach((part) => {
+      const trimmed = part.trim()
+      if (!trimmed) return
+      const key = trimmed.toLowerCase()
+      if (seen.has(key)) return
+      seen.add(key)
+      labels.push(trimmed)
+    })
+  })
+
+  return labels.length > 0 ? labels.join(', ') : null
+}
+
 const backfillCandidateScheduleInterview = async () => {
   const candidates = await repository.findCandidatesMissingScheduleInterview()
   const summary = { total_checked: candidates.length, updated: 0, skipped: 0, errors: [] }
 
   for (const candidate of candidates) {
     try {
-      const latestSchedule = await scheduleInterviewRepository.findLatestByCandidateId(candidate.candidate_id)
+      const schedules = await scheduleInterviewRepository.findAllByCandidateId(candidate.candidate_id)
 
-      if (!latestSchedule) {
+      if (!schedules || schedules.length === 0) {
         summary.skipped++
         continue
       }
 
+      const latestSchedule = schedules[0]
       const scheduleInterviewJson = {
-        assign_role: resolveAssignRoleLabel(latestSchedule.assign_role),
+        assign_role: combineAssignRoleLabels(schedules),
         schedule_interview_date: normalizeDateOnlyValue(latestSchedule.schedule_interview_date),
         schedule_interview_time: latestSchedule.schedule_interview_time,
         schedule_interview_duration: latestSchedule.schedule_interview_duration

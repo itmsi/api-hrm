@@ -154,13 +154,12 @@ const findEmployeeIdByName = async (employeeName) => {
     .first()
 }
 
-const findLatestByCandidateId = async (candidateId) => {
+const findAllByCandidateId = async (candidateId) => {
   return pgCore(TABLE_NAME)
     .select('assign_role', 'schedule_interview_date', 'schedule_interview_time', 'schedule_interview_duration')
     .where({ candidate_id: candidateId, deleted_at: null })
     .orderByRaw("COALESCE(schedule_interview_date::text, '') DESC")
     .orderByRaw("COALESCE(schedule_interview_time::text, '') DESC")
-    .first()
 }
 
 module.exports = {
@@ -169,7 +168,7 @@ module.exports = {
   create,
   update,
   remove,
-  findLatestByCandidateId,
+  findAllByCandidateId,
   findRawById,
   insertRaw,
   updateRaw,
