@@ -10,6 +10,7 @@ const {
 } = require('./validation')
 const { verifyToken } = require('../../middlewares')
 const { validateMiddleware } = require('../../middlewares/validation')
+const { handleFileUpload } = require('../../middlewares/fileUpload')
 
 router.post(
   '/get',
@@ -26,6 +27,12 @@ router.post(
   createValidation,
   validateMiddleware,
   controller.create
+)
+
+router.post(
+  '/import',
+  handleFileUpload,
+  controller.importCsv
 )
 
 router.put(
