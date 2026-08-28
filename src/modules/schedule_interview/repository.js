@@ -131,10 +131,37 @@ const remove = async (id, deletedBy) => {
     .first()
 }
 
+const findRawById = async (id) => {
+  return pgCore(TABLE_NAME).where({ schedule_interview_id: id }).first()
+}
+
+const insertRaw = async (payload) => {
+  const [inserted] = await pgCore(TABLE_NAME).insert(payload).returning('schedule_interview_id')
+  return inserted
+}
+
+const updateRaw = async (id, payload) => {
+  const [updated] = await pgCore(TABLE_NAME)
+    .where({ schedule_interview_id: id })
+    .update(payload)
+    .returning('schedule_interview_id')
+  return updated
+}
+
+const findEmployeeIdByName = async (employeeName) => {
+  return pgCore('gate_sso_employees')
+    .whereRaw('lower(employee_name) = ?', [String(employeeName).trim().toLowerCase()])
+    .first()
+}
+
 module.exports = {
   findAll,
   findById,
   create,
   update,
-  remove
+  remove,
+  findRawById,
+  insertRaw,
+  updateRaw,
+  findEmployeeIdByName
 }

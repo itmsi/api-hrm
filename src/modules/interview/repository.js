@@ -289,11 +289,58 @@ const remove = async (id, deletedBy) => {
   })
 }
 
+const findRawById = async (id) => {
+  return pgCore(TABLE_NAME).where({ interview_id: id }).first()
+}
+
+const insertRaw = async (payload) => {
+  const [inserted] = await pgCore(TABLE_NAME).insert(payload).returning('interview_id')
+  return inserted
+}
+
+const updateRaw = async (id, payload) => {
+  const [updated] = await pgCore(TABLE_NAME)
+    .where({ interview_id: id })
+    .update(payload)
+    .returning('interview_id')
+  return updated
+}
+
+const findEmployeeIdByName = async (employeeName) => {
+  return pgCore('gate_sso_employees')
+    .whereRaw('lower(employee_name) = ?', [String(employeeName).trim().toLowerCase()])
+    .first()
+}
+
+const findRawDetailById = async (id) => {
+  return pgCore(DETAIL_TABLE_NAME).where({ detail_interview_id: id }).first()
+}
+
+const insertRawDetail = async (payload) => {
+  const [inserted] = await pgCore(DETAIL_TABLE_NAME).insert(payload).returning('detail_interview_id')
+  return inserted
+}
+
+const updateRawDetail = async (id, payload) => {
+  const [updated] = await pgCore(DETAIL_TABLE_NAME)
+    .where({ detail_interview_id: id })
+    .update(payload)
+    .returning('detail_interview_id')
+  return updated
+}
+
 module.exports = {
   findAll,
   findById,
   findByScheduleAndCompanyValue,
   create,
   update,
-  remove
+  remove,
+  findRawById,
+  insertRaw,
+  updateRaw,
+  findEmployeeIdByName,
+  findRawDetailById,
+  insertRawDetail,
+  updateRawDetail
 }
