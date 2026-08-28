@@ -50,10 +50,23 @@ const remove = async (req, res) => {
   }
 }
 
+const importCsv = async (req, res) => {
+  try {
+    if (!req.file) {
+      return errorResponse(res, 'File CSV wajib diunggah', 400)
+    }
+    const data = await service.importBackgroundChecksFromCsv(req.file.buffer)
+    return successResponse(res, data, 'Import data background check selesai diproses')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
 module.exports = {
   getList,
   getById,
   create,
   update,
-  remove
+  remove,
+  importCsv
 }
