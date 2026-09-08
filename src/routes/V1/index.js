@@ -42,6 +42,10 @@ routing.use(`${API_TAG}/hrm/on_board_document`, onBoardDocumentModule)
 const noteModule = require('../../modules/note')
 routing.use(`${API_TAG}/hrm/note`, noteModule)
 
+// Applicant Forms Module
+const applicantFormsModule = require('../../modules/applicant_forms')
+routing.use(`${API_TAG}/hrm/applicant_forms`, applicantFormsModule)
+
 // Tambahkan routes module Anda di sini
 // Example:
 // const yourModule = require('../../modules/yourModule')
