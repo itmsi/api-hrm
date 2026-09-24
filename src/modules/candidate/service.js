@@ -308,6 +308,18 @@ const updateCandidate = async (id, candidateData, files, user) => {
   return finalCandidate
 }
 
+const updateCandidateIsEmployee = async (id, isEmployee, user) => {
+  const existing = await repository.findById(id)
+  if (!existing) {
+    throw { message: 'Data kandidat tidak ditemukan', statusCode: 404 }
+  }
+  const authorId = getRequesterId(user)
+  return await repository.update(id, {
+    is_employee: isEmployee,
+    updated_by: authorId
+  })
+}
+
 const deleteCandidate = async (id, user) => {
   const existing = await repository.findById(id)
   if (!existing) {
@@ -322,5 +334,6 @@ module.exports = {
   getCandidateById,
   createCandidate,
   updateCandidate,
+  updateCandidateIsEmployee,
   deleteCandidate
 }

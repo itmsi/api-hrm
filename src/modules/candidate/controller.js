@@ -39,6 +39,16 @@ const update = async (req, res) => {
   }
 }
 
+const updateIsEmployee = async (req, res) => {
+  try {
+    const { id } = req.params
+    const data = await service.updateCandidateIsEmployee(id, req.body.is_employee, req.user)
+    return successResponse(res, data, 'Status karyawan kandidat berhasil diupdate')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
 const remove = async (req, res) => {
   try {
     const { id } = req.params
@@ -54,5 +64,6 @@ module.exports = {
   getById,
   create,
   update,
+  updateIsEmployee,
   remove
 }

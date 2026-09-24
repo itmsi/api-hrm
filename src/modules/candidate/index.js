@@ -6,6 +6,7 @@ const {
   updateValidation,
   getByIdValidation,
   getListValidation,
+  updateIsEmployeeValidation,
   normalizeCandidateFormData
 } = require('./validation')
 const { verifyToken } = require('../../middlewares')
@@ -53,6 +54,19 @@ router.put(
   updateValidation,
   validateMiddleware,
   controller.update
+)
+
+/**
+ * @route   PUT /api/hrm/candidates/:id/is-employee
+ * @desc    Update is_employee flag of candidate by ID
+ * @access  Protected
+ */
+router.put(
+  '/:id/is-employee',
+  verifyToken,
+  updateIsEmployeeValidation,
+  validateMiddleware,
+  controller.updateIsEmployee
 )
 
 /**
