@@ -59,11 +59,34 @@ const remove = async (req, res) => {
   }
 }
 
+const importCsv = async (req, res) => {
+  try {
+    if (!req.file) {
+      return errorResponse(res, 'File CSV wajib diunggah', 400)
+    }
+    const data = await service.importCandidatesFromCsv(req.file.buffer, req.user)
+    return successResponse(res, data, 'Import data kandidat selesai diproses')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
+const backfillScheduleInterview = async (req, res) => {
+  try {
+    const data = await service.backfillCandidateScheduleInterview()
+    return successResponse(res, data, 'Backfill data schedule_interview kandidat selesai diproses')
+  } catch (error) {
+    return errorResponse(res, error?.message || error, error?.statusCode || 500)
+  }
+}
+
 module.exports = {
   getList,
   getById,
   create,
   update,
   updateIsEmployee,
-  remove
+  remove,
+  importCsv,
+  backfillScheduleInterview
 }
