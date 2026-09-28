@@ -57,6 +57,7 @@ const SELECT_COLUMNS = [
   'candidates.group_id',
   'candidates.candidate_status',
   'candidates.candidate_status_offering_letter',
+  'candidates.is_employee',
   'candidates.created_at',
   'candidates.created_by',
   'candidates.updated_at',

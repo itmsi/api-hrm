@@ -236,6 +236,22 @@ const candidateSchemas = {
         type: 'boolean',
         description: 'Soft delete flag',
         example: false
+      },
+      is_employee: {
+        type: 'boolean',
+        description: 'Penanda kandidat sudah menjadi karyawan',
+        example: false
+      }
+    }
+  },
+  CandidateIsEmployeeInput: {
+    type: 'object',
+    required: ['is_employee'],
+    properties: {
+      is_employee: {
+        type: 'boolean',
+        description: 'Status karyawan kandidat (true/false)',
+        example: true
       }
     }
   },

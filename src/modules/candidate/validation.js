@@ -115,6 +115,11 @@ const getByIdValidation = [
   param('id').notEmpty().withMessage('ID wajib diisi').isUUID().withMessage('Format ID tidak valid')
 ]
 
+const updateIsEmployeeValidation = [
+  param('id').notEmpty().withMessage('ID wajib diisi').isUUID().withMessage('Format ID tidak valid'),
+  body('is_employee').exists({ checkNull: true }).withMessage('is_employee wajib diisi').isBoolean({ strict: true }).withMessage('is_employee harus boolean (true/false)')
+]
+
 const getListValidation = [
   body('page').optional().isInt({ min: 1 }).withMessage('Page harus berupa angka positif'),
   body('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit harus antara 1-100'),
@@ -135,5 +140,6 @@ module.exports = {
   updateValidation,
   getByIdValidation,
   getListValidation,
+  updateIsEmployeeValidation,
   normalizeCandidateFormData
 }

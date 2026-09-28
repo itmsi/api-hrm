@@ -109,6 +109,55 @@ const candidatePaths = {
       }
     }
   },
+  '/candidates/{id}/is-employee': {
+    put: {
+      tags: ['Candidates'],
+      summary: 'Update candidate is_employee',
+      description: 'Update flag is_employee kandidat berdasarkan ID',
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'Candidate UUID',
+          schema: { type: 'string', format: 'uuid' }
+        }
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/CandidateIsEmployeeInput' }
+          }
+        }
+      },
+      responses: {
+        200: {
+          description: 'Updated successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  data: { $ref: '#/components/schemas/Candidate' },
+                  message: { type: 'string', example: 'Status karyawan kandidat berhasil diupdate' }
+                }
+              }
+            }
+          }
+        },
+        404: {
+          description: 'Candidate not found'
+        }
+      }
+    }
+  },
   '/candidates/{id}': {
     get: {
       tags: ['Candidates'],
