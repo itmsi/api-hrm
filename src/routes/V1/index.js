@@ -1,8 +1,8 @@
-const express = require('express')
+const express = require("express");
 // const { verifyToken } = require('../../middlewares')
 
 const routing = express();
-const API_TAG = '/api';
+const API_TAG = "/api";
 
 /* RULE
 naming convention endpoint: using plural
@@ -15,40 +15,40 @@ Example:
 */
 
 // Example Module (Template untuk module Anda)
-const exampleModule = require('../../modules/example')
-routing.use(`${API_TAG}/examples`, exampleModule)
+const exampleModule = require("../../modules/example");
+routing.use(`${API_TAG}/examples`, exampleModule);
 
 // Candidate Module
-const candidateModule = require('../../modules/candidate')
-routing.use(`${API_TAG}/hrm/candidates`, candidateModule)
+const candidateModule = require("../../modules/candidate");
+routing.use(`${API_TAG}/hrm/candidates`, candidateModule);
 
 // Schedule Interview Module
-const scheduleInterviewModule = require('../../modules/schedule_interview')
-routing.use(`${API_TAG}/hrm/schedule_interview`, scheduleInterviewModule)
+const scheduleInterviewModule = require("../../modules/schedule_interview");
+routing.use(`${API_TAG}/hrm/schedule_interview`, scheduleInterviewModule);
 
 // Interview Module
-const interviewModule = require('../../modules/interview')
-routing.use(`${API_TAG}/hrm/interviews`, interviewModule)
+const interviewModule = require("../../modules/interview");
+routing.use(`${API_TAG}/hrm/interviews`, interviewModule);
 
 // Background Check Module
-const backgroundCheckModule = require('../../modules/background_check')
-routing.use(`${API_TAG}/hrm/background_check`, backgroundCheckModule)
+const backgroundCheckModule = require("../../modules/background_check");
+routing.use(`${API_TAG}/hrm/background_check`, backgroundCheckModule);
 
 // On Board Document Module
-const onBoardDocumentModule = require('../../modules/on_board_document')
-routing.use(`${API_TAG}/hrm/on_board_document`, onBoardDocumentModule)
+const onBoardDocumentModule = require("../../modules/on_board_document");
+routing.use(`${API_TAG}/hrm/on_board_document`, onBoardDocumentModule);
 
 // Note Module
-const noteModule = require('../../modules/note')
-routing.use(`${API_TAG}/hrm/note`, noteModule)
+const noteModule = require("../../modules/note");
+routing.use(`${API_TAG}/hrm/note`, noteModule);
 
 // Applicant Forms Module
-const applicantFormsModule = require('../../modules/applicant_forms')
-routing.use(`${API_TAG}/hrm/applicant_forms`, applicantFormsModule)
+const applicantFormsModule = require("../../modules/applicant_forms");
+routing.use(`${API_TAG}/hrm/applicant_forms`, applicantFormsModule);
 
 // Master Questions Module
-const masterQuestionsModule = require('../../modules/master_questions')
-routing.use(`${API_TAG}/career/master_questions`, masterQuestionsModule)
+const masterQuestionsModule = require("../../modules/master_questions");
+routing.use(`${API_TAG}/hrm/master_questions`, masterQuestionsModule);
 
 // Tambahkan routes module Anda di sini
 // Example:
