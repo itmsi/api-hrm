@@ -13,6 +13,7 @@ const SELECT_COLUMNS = [
   `${TABLE_NAME}.question_en`,
   `${TABLE_NAME}.question_cn`,
   `${TABLE_NAME}.focus_assessment`,
+  `${TABLE_NAME}.step`,
   `${TABLE_NAME}.created_at`,
   `${TABLE_NAME}.created_by`,
   `${TABLE_NAME}.updated_at`,
@@ -23,8 +24,8 @@ const SELECT_COLUMNS = [
   'created_employee.employee_name as created_by_name',
   'updated_employee.employee_name as updated_by_name'
 ]
-const ALLOWED_SORT_COLUMNS = ['created_at', 'updated_at', 'focus_assessment']
-const SEARCHABLE_COLUMNS = ['question_id', 'question_en', 'question_cn', 'focus_assessment'].map(
+const ALLOWED_SORT_COLUMNS = ['created_at', 'updated_at', 'focus_assessment', 'step']
+const SEARCHABLE_COLUMNS = ['question_id', 'question_en', 'question_cn', 'focus_assessment', 'step'].map(
   (column) => `${TABLE_NAME}.${column}`
 )
 

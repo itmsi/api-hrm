@@ -30,7 +30,7 @@ const masterQuestionsPaths = {
                 search: { type: "string", example: "" },
                 sort_by: {
                   type: "string",
-                  enum: ["created_at", "updated_at", "focus_assessment"],
+                  enum: ["created_at", "updated_at", "focus_assessment", "step"],
                   example: "created_at",
                 },
                 sort_order: {
