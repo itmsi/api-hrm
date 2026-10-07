@@ -9,7 +9,10 @@ const createValidation = [
   optionalString('question_cn', 'question_cn'),
   optionalString('focus_assessment', 'focus_assessment')
     .isLength({ max: 255 })
-    .withMessage('focus_assessment maksimal 255 karakter')
+    .withMessage('focus_assessment maksimal 255 karakter'),
+  optionalString('step', 'step')
+    .isLength({ max: 255 })
+    .withMessage('step maksimal 255 karakter')
 ]
 
 const updateValidation = [
@@ -27,8 +30,8 @@ const getListValidation = [
   body('search').optional({ nullable: true }).isString().withMessage('Search harus berupa teks'),
   body('sort_by')
     .optional()
-    .isIn(['created_at', 'updated_at', 'focus_assessment'])
-    .withMessage('sort_by harus salah satu dari created_at, updated_at, focus_assessment'),
+    .isIn(['created_at', 'updated_at', 'focus_assessment', 'step'])
+    .withMessage('sort_by harus salah satu dari created_at, updated_at, focus_assessment, step'),
   body('sort_order').optional().isIn(['asc', 'desc']).withMessage('sort_order harus asc atau desc')
 ]
 

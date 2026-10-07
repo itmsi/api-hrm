@@ -17,7 +17,8 @@ const buildPayload = (payload = {}) => ({
   question_id: normalizeOptionalString(payload.question_id),
   question_en: normalizeOptionalString(payload.question_en),
   question_cn: normalizeOptionalString(payload.question_cn),
-  focus_assessment: normalizeOptionalString(payload.focus_assessment)
+  focus_assessment: normalizeOptionalString(payload.focus_assessment),
+  step: normalizeOptionalString(payload.step)
 })
 
 const getMasterQuestions = async (params) => {
