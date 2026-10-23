@@ -28,6 +28,11 @@ const masterQuestionsSchema = {
         example: "Communication",
       },
       step: { type: "string", nullable: true, example: "1" },
+      prompt_ai_summary: {
+        type: "string",
+        nullable: true,
+        example: "Ringkas jawaban kandidat terkait kemampuan komunikasi.",
+      },
       created_at: {
         type: "string",
         format: "date-time",
@@ -72,6 +77,11 @@ const masterQuestionsSchema = {
         example: "Communication",
       },
       step: { type: "string", nullable: true, maxLength: 255, example: "1" },
+      prompt_ai_summary: {
+        type: "string",
+        nullable: true,
+        example: "Ringkas jawaban kandidat terkait kemampuan komunikasi.",
+      },
     },
   },
 };

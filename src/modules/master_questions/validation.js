@@ -12,7 +12,8 @@ const createValidation = [
     .withMessage('focus_assessment maksimal 255 karakter'),
   optionalString('step', 'step')
     .isLength({ max: 255 })
-    .withMessage('step maksimal 255 karakter')
+    .withMessage('step maksimal 255 karakter'),
+  optionalString('prompt_ai_summary', 'prompt_ai_summary')
 ]
 
 const updateValidation = [
