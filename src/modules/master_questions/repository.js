@@ -14,6 +14,7 @@ const SELECT_COLUMNS = [
   `${TABLE_NAME}.question_cn`,
   `${TABLE_NAME}.focus_assessment`,
   `${TABLE_NAME}.step`,
+  `${TABLE_NAME}.prompt_ai_summary`,
   `${TABLE_NAME}.created_at`,
   `${TABLE_NAME}.created_by`,
   `${TABLE_NAME}.updated_at`,
