@@ -82,7 +82,8 @@ const masterQuestionsPaths = {
     post: {
       tags: ["Master Questions"],
       summary: "Create master question",
-      description: "Create a new master question record",
+      description:
+        "Create a new master question record. step tidak boleh duplikat dengan master question lain yang belum di-soft delete.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -142,7 +143,8 @@ const masterQuestionsPaths = {
     put: {
       tags: ["Master Questions"],
       summary: "Update master question",
-      description: "Update an existing master question",
+      description:
+        "Update an existing master question. step tidak boleh duplikat dengan master question lain yang belum di-soft delete.",
       security: [{ bearerAuth: [] }],
       parameters: [idParameter],
       requestBody: {

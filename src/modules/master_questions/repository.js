@@ -90,6 +90,14 @@ const findById = async (id) => {
     .first();
 };
 
+const findActiveByStep = async (step, excludeId = null) => {
+  const query = pgCore(TABLE_NAME)
+    .select("id")
+    .where({ step, deleted_at: null });
+  if (excludeId) query.whereNot({ id: excludeId });
+  return await query.first();
+};
+
 const create = async (data = {}) => {
   const [inserted] = await pgCore(TABLE_NAME)
     .insert({
@@ -132,6 +140,7 @@ const remove = async (id, deletedBy) => {
 module.exports = {
   findAll,
   findById,
+  findActiveByStep,
   create,
   update,
   remove,

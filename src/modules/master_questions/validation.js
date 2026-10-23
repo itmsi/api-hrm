@@ -1,4 +1,5 @@
 const { body, param } = require('express-validator')
+const repository = require('./repository')
 
 const optionalString = (field, label) =>
   body(field).optional({ nullable: true }).isString().withMessage(`${label} harus berupa teks`).trim()
@@ -12,7 +13,14 @@ const createValidation = [
     .withMessage('focus_assessment maksimal 255 karakter'),
   optionalString('step', 'step')
     .isLength({ max: 255 })
-    .withMessage('step maksimal 255 karakter'),
+    .withMessage('step maksimal 255 karakter')
+    .bail()
+    .custom(async (value, { req }) => {
+      if (!value) return true
+      const duplicate = await repository.findActiveByStep(value, req.params?.id || null)
+      if (duplicate) throw new Error(`Step ${value} sudah digunakan oleh master question lain`)
+      return true
+    }),
   optionalString('prompt_ai_summary', 'prompt_ai_summary')
 ]
 
