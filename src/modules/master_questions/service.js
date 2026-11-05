@@ -18,7 +18,8 @@ const buildPayload = (payload = {}) => ({
   question_en: normalizeOptionalString(payload.question_en),
   question_cn: normalizeOptionalString(payload.question_cn),
   focus_assessment: normalizeOptionalString(payload.focus_assessment),
-  step: normalizeOptionalString(payload.step)
+  step: normalizeOptionalString(payload.step),
+  prompt_ai_summary: normalizeOptionalString(payload.prompt_ai_summary)
 })
 
 const getMasterQuestions = async (params) => {

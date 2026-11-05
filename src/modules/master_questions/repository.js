@@ -14,6 +14,7 @@ const SELECT_COLUMNS = [
   `${TABLE_NAME}.question_cn`,
   `${TABLE_NAME}.focus_assessment`,
   `${TABLE_NAME}.step`,
+  `${TABLE_NAME}.prompt_ai_summary`,
   `${TABLE_NAME}.created_at`,
   `${TABLE_NAME}.created_by`,
   `${TABLE_NAME}.updated_at`,
@@ -89,6 +90,14 @@ const findById = async (id) => {
     .first();
 };
 
+const findActiveByStep = async (step, excludeId = null) => {
+  const query = pgCore(TABLE_NAME)
+    .select("id")
+    .where({ step, deleted_at: null });
+  if (excludeId) query.whereNot({ id: excludeId });
+  return await query.first();
+};
+
 const create = async (data = {}) => {
   const [inserted] = await pgCore(TABLE_NAME)
     .insert({
@@ -131,6 +140,7 @@ const remove = async (id, deletedBy) => {
 module.exports = {
   findAll,
   findById,
+  findActiveByStep,
   create,
   update,
   remove,
